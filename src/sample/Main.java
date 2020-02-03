@@ -17,29 +17,20 @@ import java.util.logging.Logger;
 
 public class Main extends Application {
     private Desktop desktop = Desktop.getDesktop();
-
+    BufferedReader reader;
     @Override
     public void start(Stage stage) {
-        String javaVersion = System.getProperty("java.version");
-        String javafxVersion = System.getProperty("javafx.version");
+        reader = null;
         Label label1 = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
-        File outFile = null;
         FileChooser fileChooser = new FileChooser();
-        BufferedReader reader;
-        System.out.println("jewotihso");
-        fileSelectorButton.setOnAction(new EventHandler<ActionEvent>(outFile) {
-            public void handle(final ActionEvent e, File f)  {
-                File file = fileChooser.showOpenDialog(stage);
-                BufferedReader reader;
-                System.out.println("okokok");
-                try {
-                    reader = new BufferedReader(new FileReader(file));
-                } catch (FileNotFoundException ex){
-                    reader = new BufferedReader(null);
-                    System.out.println("LULW");
-                }
-                return reader;
+        fileSelectorButton.setOnAction(e -> {
+            File file = fileChooser.showOpenDialog(stage);
+            openFile(file);
+            try {
+                System.out.println(reader.readLine());
+            } catch (IOException ex) {
+                System.out.println("IOException in printing file");
             }
         });
         Scene welcome = new Scene(new StackPane(label1, fileSelectorButton), 640, 480);
@@ -51,12 +42,13 @@ public class Main extends Application {
 
     }
 
+
     public void openFile(File f){
         try {
-            System.out.println("Yes yes yes yes");
-            desktop.open(f);
-        } catch (IOException e){
-            System.out.println("Oh no");
+            reader = new BufferedReader(new FileReader(f));
+        } catch (IOException ex){
+            reader = new BufferedReader(null);
+            System.out.println("IOException in opening file");
         }
     }
 
