@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
@@ -32,14 +33,24 @@ public class Main extends Application {
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
         Button simulationButton = new Button("Run Simulation");
-        simulationButton.setOnAction(e -> SetDashboadScene());
         FileChooser fileChooser = new FileChooser();
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage));
         ListView<String>selectedHeaders = new ListView<String>();
+        selectedHeaders.setOnMouseClicked(new EventHandler<MouseEvent>() {
+
+                                       @Override
+                                       public void handle(MouseEvent click) {
+
+                                           if (click.getClickCount() == 2) {
+                                               //Use ListView's getSelected Item
+                                               selectedHeaders.getItems().remove(selectedHeaders.getSelectionModel().getSelectedItem());
+                                           }
+                                       }
+                                   });
         headerPicker =  new ComboBox<String>();
         headerPicker.setPromptText("Choose a file to select headers");
         Button addHeader = new Button("Add Header");
-        addHeader.setOnAction(e -> selectedHeaders.getItems().addAll(headerPicker.getValue()));
+        addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaders));
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
@@ -52,13 +63,24 @@ public class Main extends Application {
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
+        simulationButton.setOnAction(e->stage.setScene(getDashboardScene(selectedHeaders)));
         stage.show();
 
     }
-    void SetDashboadScene()
+    void tryAddItem(String item, ListView<String> lv)
+    {
+        if (!lv.getItems().contains(item)&&(item!=null)){
+            lv.getItems().add(item);
+        }
+    }
+    Scene getDashboardScene(ListView<String>selectedItems)
     {
 
+        BorderPane bp = new BorderPane();
+        Scene simulation = new Scene(bp, 640, 480);
+        return simulation;
     }
+
 
 
     public void openFile(FileChooser fileChooser,Stage stage){
@@ -70,7 +92,9 @@ public class Main extends Application {
             System.out.println("IOException in opening file");
         }
             try {
+                reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
                 String commaSep = reader.readLine();
+                reader.reset();
                 fillComboBoxFromReader(commaSep);
             } catch (IOException ex) {
                 System.out.println("IOException in printing file");
@@ -78,6 +102,7 @@ public class Main extends Application {
 
     }
     public void fillComboBoxFromReader(String commaSepItems){
+        headerPicker.getItems().clear();
         headerPicker.getItems().addAll(commaSepItems.split(","));
     }
 
