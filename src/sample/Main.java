@@ -1,29 +1,37 @@
 package sample;
 
+import eu.hansolo.medusa.*;
+import eu.hansolo.medusa.skins.SlimSkin;
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
 
 import java.io.*;
-import java.util.Arrays;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//TODO:
+//-Add max values for every conceivable header
+//-Have gauges update with time
 public class Main extends Application {
     private BufferedReader reader;
     private int rowCount;
+    private List<Gauge> gauges;
     private float[][] dataArray; //Ignore this warning, dataArray to be used for gauges
     private ComboBox<String> headerPicker;
+    private int currentTime = 0;
     @Override
     public void start(Stage stage) {
         reader = null;
@@ -48,6 +56,7 @@ public class Main extends Application {
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
         Button addHeader = new Button("Add Header");
+        System.out.println("IUEHSIUHFHWIUWIU");
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaders));
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
@@ -63,7 +72,97 @@ public class Main extends Application {
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->stage.setScene(getDashboardScene(selectedHeaders)));
         stage.show();
+    }
 
+    public int getMaxValue(String val){
+        switch (val){
+            case "HR":
+                return 200;
+            case "SBP":
+                return 140;
+            case "DBP":
+                return 100;
+            case "MAP":
+                return 100;
+            case "CVP":
+                return 10;
+            case "VT":
+                return 600;
+            default:
+                return -1;
+        }
+
+    }
+
+    public String getUnit(String val){
+        switch (val){
+            case "HR":
+                return "BPM";
+            case "SBP":
+                return "SBP";
+            case "DBP":
+                return "DBP";
+            case "MAP":
+                return "MAP";
+            case "CVP":
+                return "CVP";
+            case "VT":
+                return "VT";
+            default:
+                return "N/A";
+        }
+    }
+
+    public void initialiseGauges(ListView<String>selectedItems, GridPane pane){
+        gauges = new ArrayList<>();
+        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
+        for (int i = 0; i < selectedItems.getItems().size(); i++){
+            Gauge gauge = builder.decimals(0).maxValue(getMaxValue(selectedItems.getItems().get(i))).unit(getUnit(selectedItems.getItems().get(i))).build();
+            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i), Color.rgb(77,208,225), gauge);
+            pane.add(gaugeBox, i%2, i /2);
+            gauges.add(gauge);
+        }
+        pane.setPadding(new Insets(20));
+        pane.setHgap(15);
+        pane.setVgap(15);
+        pane.setBackground(new Background(new BackgroundFill(Color.rgb(39,44,50), CornerRadii.EMPTY, Insets.EMPTY)));
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask()
+        {
+            public void run()
+            {
+                System.out.println("hi");
+                for (int i = 0; i < gauges.size(); i++){
+                    System.out.println(i);
+                    System.out.println(dataArray[currentTime/5][i+1]);
+                    gauges.get(i).setValue(dataArray[currentTime/5][i+1]);
+                }
+                currentTime+=5;
+            }
+
+        };
+        timer.scheduleAtFixedRate(task, 0l,5000l);
+    }
+
+    private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
+        Rectangle bar = new Rectangle(200, 3);
+        bar.setArcWidth(6);
+        bar.setArcHeight(6);
+        bar.setFill(COLOR);
+
+        Label label = new Label(TEXT);
+        label.setTextFill(COLOR);
+        label.setAlignment(Pos.CENTER);
+        label.setPadding(new Insets(0, 0, 10, 0));
+
+        GAUGE.setBarColor(COLOR);
+        GAUGE.setBarBackgroundColor(Color.rgb(39,44,50));
+        GAUGE.setAnimated(true);
+
+        VBox vBox = new VBox(bar, label, GAUGE);
+        vBox.setSpacing(3);
+        vBox.setAlignment(Pos.CENTER);
+        return vBox;
     }
 
     private void handleMouse(MouseEvent click, ListView<String> selectedHeaders){
@@ -81,39 +180,57 @@ public class Main extends Application {
     private Scene getDashboardScene(ListView<String>selectedItems)
     {
         fillDataArray(selectedItems);
-        BorderPane bp = new BorderPane();
-        Scene simulation = new Scene(bp, 640, 480);
+        GridPane gp = new GridPane();
+        initialiseGauges(selectedItems, gp);
+        Scene simulation = new Scene(gp, 640, 480);
         return simulation;
     }
 
     private void fillDataArray(ListView<String>selectedItems){
-        dataArray = new float[rowCount][selectedItems.getItems().size()];
-        System.out.println(selectedItems.getItems().get(0));
-        int[][] offSetArray = new int [selectedItems.getItems().size()][2];
-        for (int i=0; i < dataArray.length; i++){
+        String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
+        for (int i = 1; i < selectedItemsArr.length; i ++){
+            selectedItemsArr[i] = selectedItems.getItems().get(i-1);
+            System.out.println(selectedItemsArr[i] + " - string");
+        }
+        selectedItemsArr[0] = "PatientTime";
+        dataArray = new float[rowCount-1][selectedItemsArr.length];
+        int[][] offSetArray = new int [selectedItemsArr.length][2];
+        for (int i=0; i < dataArray.length+1; i++){
             String[] tempData = new String[1];
             try{
                 tempData = reader.readLine().split(", ");
+                System.out.println("Tempdata: ");
+                for (int j = 0; j < tempData.length; j++){
+                    System.out.println(tempData[j]);
+                }
             }
             catch (IOException ex){
                 System.out.println("IOException in reading from file.");
             }
             if (i == 0){
-                for (int j = 0; j < dataArray[i].length; j++){
+                for (int j = 0; j < dataArray[0].length; j++){
                     offSetArray[j][0] = j;
-                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItems.getItems().get(j));
+                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsArr[j]);
                 }
             } else {
-                for (int j = 0; j < dataArray[i].length; j++) {
+                for (int j = 0; j < dataArray[i-1].length; j++) {
+                    System.out.println("Length: " + dataArray[i-1].length);
                     if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
-                        dataArray[i][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
+                        dataArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
                     } else if (offSetArray[j][1] == 2) { //Date
-                        dataArray[i][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
+                        dataArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
                     } else { //Regular float
-                        dataArray[i][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                        dataArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
                     }
                 }
             }
+        }
+        for (int i = 0; i < dataArray.length; i++){
+            System.out.println("");
+            for (int j = 0; j < dataArray[i].length; j++){
+                System.out.print(dataArray[i][j] + ",");
+            }
+            System.out.println("");
         }
     }
 
@@ -161,6 +278,7 @@ public class Main extends Application {
                 reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
                 String commaSep = reader.readLine();
                 reader.reset();
+                System.out.println("Hello there :)");
                 fillComboBoxFromReader(commaSep);
             } catch (IOException ex) {
                 System.out.println("IOException in printing file");
@@ -179,7 +297,13 @@ public class Main extends Application {
     }
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
-        headerPicker.getItems().addAll(commaSepItems.split(", "));
+        String[] commaSepItemsArr = commaSepItems.split(", ");
+        for (int i = 0; i< commaSepItemsArr.length; i++){
+            String currentItem = commaSepItemsArr[i];
+            if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")){
+                headerPicker.getItems().add(currentItem);
+            }
+        }
     }
 
     public static void main(String[] args) {
