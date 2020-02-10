@@ -5,16 +5,13 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.ListView;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.control.Label;
 
 import java.io.*;
 import java.util.*;
@@ -25,6 +22,7 @@ import java.util.regex.Pattern;
 //TODO:
 //-Add max values for every conceivable header
 //-Have gauges update with time
+
 public class Main extends Application {
     private BufferedReader reader;
     private int rowCount;
@@ -32,9 +30,11 @@ public class Main extends Application {
     private float[][] dataArray; //Ignore this warning, dataArray to be used for gauges
     private ComboBox<String> headerPicker;
     private int currentStep = 0;
-    private final int updateFrequency = 100; //Frequency of gauge updates in ms
+    private final int updateFrequency = 500; //Frequency of gauge updates in ms
     private float mu = 0.0f;
     private Timer eventTimer;
+    private boolean timerStarted = false;
+    private Slider timeSlider;
     @Override
     public void start(Stage stage) {
         reader = null;
@@ -77,6 +77,7 @@ public class Main extends Application {
         stage.show();
     }
 
+    //Returns the maximum value a heading should ever have
     private int getMaxValue(String val){
         switch (val){
             case "HR":
@@ -97,6 +98,7 @@ public class Main extends Application {
 
     }
 
+    //Returns the unit for a given heading
     private String getUnit(String val){
         switch (val){
             case "HR":
@@ -116,11 +118,32 @@ public class Main extends Application {
         }
     }
 
+    //Returns number of decimal places needed to display a given heading
+    private int getDecimals(String val){
+        switch (val){
+            case "HR":
+                return 0;
+            case "SBP":
+                return 0;
+            case "DBP":
+                return 0;
+            case "MAP":
+                return 1;
+            case "CVP":
+                return 0;
+            case "VT":
+                return 0;
+            default:
+                return 0;
+        }
+    }
+
     private void initialiseGauges(ListView<String>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
         for (int i = 0; i < selectedItems.getItems().size(); i++){
-            Gauge gauge = builder.decimals(0).maxValue(getMaxValue(selectedItems.getItems().get(i))).unit(getUnit(selectedItems.getItems().get(i))).build();
+            String currentItem = selectedItems.getItems().get(i);
+            Gauge gauge = builder.decimals(getDecimals(currentItem)).maxValue(getMaxValue(currentItem)).unit(getUnit(currentItem)).build();
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i), Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
             //gauge.setAnimationDuration(5000);
@@ -131,39 +154,38 @@ public class Main extends Application {
         pane.setVgap(15);
         pane.setBackground(new Background(new BackgroundFill(Color.rgb(39,44,50), CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
-        TimerTask task = new TimerTask()
-        {
-            public void run()
-            {
-                System.out.println("hi");
-                for (int i = 0; i < gauges.size(); i++){
-                    System.out.println(i);
-                    System.out.println(dataArray[currentStep][i+1]);
-                    float currentVal, nextVal, gaugeVal;
-                    currentVal = dataArray[currentStep][i+1];
-                    if (currentStep < dataArray.length-1) {
-                        nextVal = dataArray[currentStep + 1][i + 1];
-                        gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
-                    }
-                    else{
-                        gaugeVal = currentVal;
-                    }
-                    gauges.get(i).setValue(gaugeVal);
-                    //gauges.get(i).setValue(dataArray[currentStep][i+1]);
-                }
-                final float muStep = (float) updateFrequency/5000;
-                mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
-                System.out.println("MU: " + mu);
-                //console.log(mu);
-                if (mu == 0){
-                    currentStep++;
-                }
-                //currentStep++;
-            }
-
-        };
+        TimerTask task = new EventTimerTask(this);
         eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
+        timerStarted = true;
     }
+
+    void updateGauges(){
+            for (int i = 0; i < gauges.size(); i++){
+                System.out.println(i);
+                System.out.println(dataArray[currentStep][i+1]);
+                float currentVal, nextVal, gaugeVal;
+                currentVal = dataArray[currentStep][i+1];
+                if (currentStep < dataArray.length-1) {
+                    nextVal = dataArray[currentStep + 1][i + 1];
+                    gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
+                }
+                else{
+                    gaugeVal = currentVal;
+                }
+                gauges.get(i).setValue(gaugeVal);
+                //gauges.get(i).setValue(dataArray[currentStep][i+1]);
+            }
+            final float muStep = (float) updateFrequency/5000;
+            mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
+            System.out.println("MU: " + mu);
+            //console.log(mu);
+            if (mu == 0){
+                currentStep++;
+            }
+            timeSlider.setValue((currentStep+mu)*5);
+
+            //currentStep++;
+        }
 
     private float roundToDP(float x, int y){
         System.out.println("Rounding " + x+ "to: " + (float)(Math.round(x*Math.pow(10, y))/Math.pow(10, y)));
@@ -212,10 +234,32 @@ public class Main extends Application {
     private Scene getDashboardScene(ListView<String>selectedItems)
     {
         fillDataArray(selectedItems);
+        BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
+        HBox topHBox = new HBox();
+        Button playbackButton = new Button("Pause");
+        playbackButton.setOnAction(e -> playBackHandler(playbackButton));
+        bp.setCenter(gp);
+        timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
+        timeSlider.setSnapToTicks(true);
+        topHBox.getChildren().addAll(playbackButton, timeSlider);
+        bp.setTop(topHBox);
         initialiseGauges(selectedItems, gp);
         //Scene simulation = ;
-        return new Scene(gp, 640, 480);
+        return new Scene(bp, 640, 480);
+    }
+
+    private void playBackHandler(Button b){
+        if (b.getText().equals("Pause")) {
+            eventTimer.cancel();
+            b.setText("Resume");
+        }
+        else {
+            eventTimer = new Timer();
+            TimerTask task = new EventTimerTask(this);
+            eventTimer.schedule(task, 0, updateFrequency);
+            b.setText("Pause");
+        }
     }
 
     private void fillDataArray(ListView<String>selectedItems){
@@ -343,8 +387,10 @@ public class Main extends Application {
 
     @Override
     public void stop(){
-        eventTimer.cancel();
-        eventTimer.purge();
+        if (timerStarted) {
+            eventTimer.cancel();
+            eventTimer.purge();
+        }
     }
 
 }
