@@ -1,7 +1,6 @@
 package sample;
 
 import eu.hansolo.medusa.*;
-import eu.hansolo.medusa.skins.SlimSkin;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,6 +18,7 @@ import javafx.scene.control.Label;
 
 import java.io.*;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +31,10 @@ public class Main extends Application {
     private List<Gauge> gauges;
     private float[][] dataArray; //Ignore this warning, dataArray to be used for gauges
     private ComboBox<String> headerPicker;
-    private int currentTime = 0;
+    private int currentStep = 0;
+    private final int updateFrequency = 100; //Frequency of gauge updates in ms
+    private float mu = 0.0f;
+    private Timer eventTimer;
     @Override
     public void start(Stage stage) {
         reader = null;
@@ -74,7 +77,7 @@ public class Main extends Application {
         stage.show();
     }
 
-    public int getMaxValue(String val){
+    private int getMaxValue(String val){
         switch (val){
             case "HR":
                 return 200;
@@ -94,7 +97,7 @@ public class Main extends Application {
 
     }
 
-    public String getUnit(String val){
+    private String getUnit(String val){
         switch (val){
             case "HR":
                 return "BPM";
@@ -113,20 +116,21 @@ public class Main extends Application {
         }
     }
 
-    public void initialiseGauges(ListView<String>selectedItems, GridPane pane){
+    private void initialiseGauges(ListView<String>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge gauge = builder.decimals(0).maxValue(getMaxValue(selectedItems.getItems().get(i))).unit(getUnit(selectedItems.getItems().get(i))).build();
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i), Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
+            //gauge.setAnimationDuration(5000);
             gauges.add(gauge);
         }
         pane.setPadding(new Insets(20));
         pane.setHgap(15);
         pane.setVgap(15);
         pane.setBackground(new Background(new BackgroundFill(Color.rgb(39,44,50), CornerRadii.EMPTY, Insets.EMPTY)));
-        Timer timer = new Timer();
+        eventTimer = new Timer();
         TimerTask task = new TimerTask()
         {
             public void run()
@@ -134,14 +138,36 @@ public class Main extends Application {
                 System.out.println("hi");
                 for (int i = 0; i < gauges.size(); i++){
                     System.out.println(i);
-                    System.out.println(dataArray[currentTime/5][i+1]);
-                    gauges.get(i).setValue(dataArray[currentTime/5][i+1]);
+                    System.out.println(dataArray[currentStep][i+1]);
+                    float currentVal, nextVal, gaugeVal;
+                    currentVal = dataArray[currentStep][i+1];
+                    if (currentStep < dataArray.length-1) {
+                        nextVal = dataArray[currentStep + 1][i + 1];
+                        gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
+                    }
+                    else{
+                        gaugeVal = currentVal;
+                    }
+                    gauges.get(i).setValue(gaugeVal);
+                    //gauges.get(i).setValue(dataArray[currentStep][i+1]);
                 }
-                currentTime+=5;
+                final float muStep = (float) updateFrequency/5000;
+                mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
+                System.out.println("MU: " + mu);
+                //console.log(mu);
+                if (mu == 0){
+                    currentStep++;
+                }
+                //currentStep++;
             }
 
         };
-        timer.scheduleAtFixedRate(task, 0l,5000l);
+        eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
+    }
+
+    private float roundToDP(float x, int y){
+        System.out.println("Rounding " + x+ "to: " + (float)(Math.round(x*Math.pow(10, y))/Math.pow(10, y)));
+        return (float)(Math.round(x*Math.pow(10, y))/Math.pow(10, y));
     }
 
     private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
@@ -165,6 +191,12 @@ public class Main extends Application {
         return vBox;
     }
 
+    private float cosineInterpolate(float y0, float y1, float mu){
+        float mu2;
+        mu2=(float)(1-Math.cos(mu*Math.PI))/2;
+        return (y0*(1-mu2)+y1*mu2);
+    }
+
     private void handleMouse(MouseEvent click, ListView<String> selectedHeaders){
         if (click.getClickCount() == 2) {
             //Use ListView's getSelected Item
@@ -182,8 +214,8 @@ public class Main extends Application {
         fillDataArray(selectedItems);
         GridPane gp = new GridPane();
         initialiseGauges(selectedItems, gp);
-        Scene simulation = new Scene(gp, 640, 480);
-        return simulation;
+        //Scene simulation = ;
+        return new Scene(gp, 640, 480);
     }
 
     private void fillDataArray(ListView<String>selectedItems){
@@ -200,9 +232,9 @@ public class Main extends Application {
             try{
                 tempData = reader.readLine().split(", ");
                 System.out.println("Tempdata: ");
-                for (int j = 0; j < tempData.length; j++){
+                /*for (int j = 0; j < tempData.length; j++){
                     System.out.println(tempData[j]);
-                }
+                }*/
             }
             catch (IOException ex){
                 System.out.println("IOException in reading from file.");
@@ -225,13 +257,13 @@ public class Main extends Application {
                 }
             }
         }
-        for (int i = 0; i < dataArray.length; i++){
+        /*for (int i = 0; i < dataArray.length; i++){
             System.out.println("");
             for (int j = 0; j < dataArray[i].length; j++){
                 System.out.print(dataArray[i][j] + ",");
             }
             System.out.println("");
-        }
+        }*/
     }
 
     private float dateTimeToFloat(String date){
@@ -298,9 +330,8 @@ public class Main extends Application {
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
         String[] commaSepItemsArr = commaSepItems.split(", ");
-        for (int i = 0; i< commaSepItemsArr.length; i++){
-            String currentItem = commaSepItemsArr[i];
-            if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")){
+        for (String currentItem : commaSepItemsArr) {
+            if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
                 headerPicker.getItems().add(currentItem);
             }
         }
@@ -308,6 +339,12 @@ public class Main extends Application {
 
     public static void main(String[] args) {
         launch();
+    }
+
+    @Override
+    public void stop(){
+        eventTimer.cancel();
+        eventTimer.purge();
     }
 
 }
