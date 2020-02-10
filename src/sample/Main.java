@@ -237,11 +237,13 @@ public class Main extends Application {
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox topHBox = new HBox();
+        topHBox.setMaxWidth(Double.MAX_VALUE);
         Button playbackButton = new Button("Pause");
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
         bp.setCenter(gp);
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setSnapToTicks(true);
+        timeSlider.setMaxWidth(Double.MAX_VALUE);
         topHBox.getChildren().addAll(playbackButton, timeSlider);
         bp.setTop(topHBox);
         initialiseGauges(selectedItems, gp);
