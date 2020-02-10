@@ -47,7 +47,6 @@ public class Main extends Application {
 
         popup = new Popup();
         popup.setAutoHide(true);
-        //popup.setAnchorLocation(stage);
 
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
@@ -58,7 +57,7 @@ public class Main extends Application {
         selectedHeaders.setOnMouseClicked(e -> handleMouse(e, selectedHeaders));
         headerPicker = new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
-        headerPicker.setMaxWidth(200);
+        headerPicker.setMaxWidth(300);
         Button addHeader = new Button("Add Header");
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(), selectedHeaders));
         HBox header = new HBox(20);
@@ -89,7 +88,8 @@ public class Main extends Application {
         popupLabel.setMinHeight(50);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(stage);
+        popup.show(stage,stage.getScene().getWindow().getX() + 5,stage.getScene().getWindow().getY() + 20);
+
     }
     private int getMaxValue(String val) {
         switch (val) {
