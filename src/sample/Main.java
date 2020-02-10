@@ -6,6 +6,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -35,6 +37,7 @@ public class Main extends Application {
     private Timer eventTimer;
     private boolean timerStarted = false;
     private Slider timeSlider;
+    private boolean paused = false;
     @Override
 
     //Initial scene setup
@@ -232,13 +235,23 @@ public class Main extends Application {
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox topHBox = new HBox();
-        topHBox.setMaxWidth(Double.MAX_VALUE);
-        Button playbackButton = new Button("Pause");
+        Button playbackButton = new Button();
+        playbackButton.setMinWidth(48f);
+        playbackButton.setMaxWidth(48f);
+        playbackButton.setMinHeight(48f);
+        playbackButton.setMaxHeight(48f);
+        Image image = new Image(getClass().getResourceAsStream("res/PauseIcon.png"));
+        ImageView imgView = new ImageView(image);
+        imgView.fitWidthProperty().bind(playbackButton.widthProperty());
+        imgView.fitHeightProperty().bind(playbackButton.heightProperty());
+        playbackButton.setGraphic(imgView);
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
         bp.setCenter(gp);
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
+        timeSlider.setMajorTickUnit(updateFrequency/1000f);
+        timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
         timeSlider.setSnapToTicks(true);
-        timeSlider.setMaxWidth(Double.MAX_VALUE);
+        timeSlider.prefWidthProperty().bind(topHBox.widthProperty());
         topHBox.getChildren().addAll(playbackButton, timeSlider);
         bp.setTop(topHBox);
         initialiseGauges(selectedItems, gp);
@@ -247,16 +260,25 @@ public class Main extends Application {
 
     //Handles stopping and starting of playback
     private void playBackHandler(Button b){
-        if (b.getText().equals("Pause")) {
+        if (!paused) {
             eventTimer.cancel();
-            b.setText("Resume");
+            Image image = new Image(getClass().getResourceAsStream("res/PlayIcon.png"));
+            ImageView imgView = new ImageView(image);
+            imgView.fitWidthProperty().bind(b.widthProperty());
+            imgView.fitHeightProperty().bind(b.heightProperty());
+            b.setGraphic(imgView);
         }
         else {
             eventTimer = new Timer();
             TimerTask task = new EventTimerTask(this);
             eventTimer.schedule(task, 0, updateFrequency);
-            b.setText("Pause");
+            Image image = new Image(getClass().getResourceAsStream("res/PauseIcon.png"));
+            ImageView imgView = new ImageView(image);
+            imgView.fitWidthProperty().bind(b.widthProperty());
+            imgView.fitHeightProperty().bind(b.heightProperty());
+            b.setGraphic(imgView);
         }
+        paused = !paused;
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
@@ -342,7 +364,6 @@ public class Main extends Application {
                 reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
                 String commaSep = reader.readLine();
                 reader.reset();
-                System.out.println("Hello there :)");
                 fillComboBoxFromReader(commaSep);
             } catch (IOException ex) {
                 System.out.println("IOException in printing file");
