@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 
 //TODO:
 //-Add max values for every conceivable header
-//-Have gauges update with time
+//-Fix bugs listed on Jira
 
 public class Main extends Application {
     private BufferedReader reader;
@@ -36,6 +36,8 @@ public class Main extends Application {
     private boolean timerStarted = false;
     private Slider timeSlider;
     @Override
+
+    //Initial scene setup
     public void start(Stage stage) {
         reader = null;
         Label title = new Label("Welcome to Patient Simulators");
@@ -45,21 +47,9 @@ public class Main extends Application {
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage));
         ListView<String>selectedHeaders = new ListView<>();
         selectedHeaders.setOnMouseClicked(e -> handleMouse(e,selectedHeaders));
-        /*new EventHandler<MouseEvent>() {
-
-                                       @Override
-                                       public void handle(MouseEvent click) {
-
-                                           if (click.getClickCount() == 2) {
-                                               //Use ListView's getSelected Item
-                                               selectedHeaders.getItems().remove(selectedHeaders.getSelectionModel().getSelectedItem());
-                                           }
-                                       }
-                                   });*/
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
         Button addHeader = new Button("Add Header");
-        System.out.println("IUEHSIUHFHWIUWIU");
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaders));
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
@@ -138,6 +128,7 @@ public class Main extends Application {
         }
     }
 
+    //Programmatically creates gauges and stores them in global list, starts timer
     private void initialiseGauges(ListView<String>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
@@ -146,7 +137,6 @@ public class Main extends Application {
             Gauge gauge = builder.decimals(getDecimals(currentItem)).maxValue(getMaxValue(currentItem)).unit(getUnit(currentItem)).build();
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i), Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
-            //gauge.setAnimationDuration(5000);
             gauges.add(gauge);
         }
         pane.setPadding(new Insets(20));
@@ -159,39 +149,38 @@ public class Main extends Application {
         timerStarted = true;
     }
 
+    //Updates gauges at a regular interval, called by EventTimerTask.run()
     void updateGauges(){
-            for (int i = 0; i < gauges.size(); i++){
-                System.out.println(i);
-                System.out.println(dataArray[currentStep][i+1]);
-                float currentVal, nextVal, gaugeVal;
-                currentVal = dataArray[currentStep][i+1];
-                if (currentStep < dataArray.length-1) {
-                    nextVal = dataArray[currentStep + 1][i + 1];
-                    gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
-                }
-                else{
-                    gaugeVal = currentVal;
-                }
-                gauges.get(i).setValue(gaugeVal);
-                //gauges.get(i).setValue(dataArray[currentStep][i+1]);
+        for (int i = 0; i < gauges.size(); i++) {
+            float currentVal, nextVal, gaugeVal;
+            currentVal = dataArray[currentStep][i + 1];
+            if (currentStep < dataArray.length - 1) {
+                nextVal = dataArray[currentStep + 1][i + 1];
+                gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
+            } else {
+                gaugeVal = currentVal;
             }
-            final float muStep = (float) updateFrequency/5000;
-            mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
-            System.out.println("MU: " + mu);
-            //console.log(mu);
-            if (mu == 0){
-                currentStep++;
-            }
-            timeSlider.setValue((currentStep+mu)*5);
-
-            //currentStep++;
+            gauges.get(i).setValue(gaugeVal);
         }
-
-    private float roundToDP(float x, int y){
-        System.out.println("Rounding " + x+ "to: " + (float)(Math.round(x*Math.pow(10, y))/Math.pow(10, y)));
-        return (float)(Math.round(x*Math.pow(10, y))/Math.pow(10, y));
+        final float muStep = (float) updateFrequency/5000;
+        mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
+        if (mu == 0){
+            currentStep++;
+        }
+        timeSlider.setValue((currentStep+mu)*5);
     }
 
+    //Rounds float to a positive number of decimal places
+    private float roundToDP(float x, int y){
+        if (y >=0) {
+            return (float) (Math.round(x * Math.pow(10, y)) / Math.pow(10, y));
+        } else{
+            return x;
+        }
+    }
+
+
+    //Setup for TopicBox
     private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
         Rectangle bar = new Rectangle(200, 3);
         bar.setArcWidth(6);
@@ -213,24 +202,30 @@ public class Main extends Application {
         return vBox;
     }
 
+    //Returns interpolated value between y0 and y1 depending on mu
     private float cosineInterpolate(float y0, float y1, float mu){
         float mu2;
         mu2=(float)(1-Math.cos(mu*Math.PI))/2;
         return (y0*(1-mu2)+y1*mu2);
     }
 
+    //Handles mouse interaction with ListView
     private void handleMouse(MouseEvent click, ListView<String> selectedHeaders){
         if (click.getClickCount() == 2) {
             //Use ListView's getSelected Item
             selectedHeaders.getItems().remove(selectedHeaders.getSelectionModel().getSelectedItem());
         }
     }
+
+    //Attempts to add item to ListView
     private void tryAddItem(String item, ListView<String> lv)
     {
         if (!lv.getItems().contains(item)&&(item!=null)){
             lv.getItems().add(item);
         }
     }
+
+    //Setup for dashboard JavaFX scene
     private Scene getDashboardScene(ListView<String>selectedItems)
     {
         fillDataArray(selectedItems);
@@ -247,10 +242,10 @@ public class Main extends Application {
         topHBox.getChildren().addAll(playbackButton, timeSlider);
         bp.setTop(topHBox);
         initialiseGauges(selectedItems, gp);
-        //Scene simulation = ;
         return new Scene(bp, 640, 480);
     }
 
+    //Handles stopping and starting of playback
     private void playBackHandler(Button b){
         if (b.getText().equals("Pause")) {
             eventTimer.cancel();
@@ -264,11 +259,11 @@ public class Main extends Application {
         }
     }
 
+    //Fills data array with values from global file corresponding to headers passed through selectedItems
     private void fillDataArray(ListView<String>selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
             selectedItemsArr[i] = selectedItems.getItems().get(i-1);
-            System.out.println(selectedItemsArr[i] + " - string");
         }
         selectedItemsArr[0] = "PatientTime";
         dataArray = new float[rowCount-1][selectedItemsArr.length];
@@ -277,10 +272,6 @@ public class Main extends Application {
             String[] tempData = new String[1];
             try{
                 tempData = reader.readLine().split(", ");
-                System.out.println("Tempdata: ");
-                /*for (int j = 0; j < tempData.length; j++){
-                    System.out.println(tempData[j]);
-                }*/
             }
             catch (IOException ex){
                 System.out.println("IOException in reading from file.");
@@ -292,7 +283,6 @@ public class Main extends Application {
                 }
             } else {
                 for (int j = 0; j < dataArray[i-1].length; j++) {
-                    System.out.println("Length: " + dataArray[i-1].length);
                     if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
                         dataArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
                     } else if (offSetArray[j][1] == 2) { //Date
@@ -303,15 +293,9 @@ public class Main extends Application {
                 }
             }
         }
-        /*for (int i = 0; i < dataArray.length; i++){
-            System.out.println("");
-            for (int j = 0; j < dataArray[i].length; j++){
-                System.out.print(dataArray[i][j] + ",");
-            }
-            System.out.println("");
-        }*/
     }
 
+    //Potentially no longer needed
     private float dateTimeToFloat(String date){
         float outVal;
         String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d";
@@ -329,6 +313,7 @@ public class Main extends Application {
         }
     }
 
+    //Converts time to float
     private float timeToFloat(String time){
         float outVal;
         String pattern = "\\d+\\d:\\d\\d:\\d\\d";
@@ -345,6 +330,7 @@ public class Main extends Application {
         }
     }
 
+    //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser,Stage stage){
         File file = fileChooser.showOpenDialog(stage);
         try {
@@ -373,6 +359,8 @@ public class Main extends Application {
             }
 
     }
+
+    //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
         String[] commaSepItemsArr = commaSepItems.split(", ");
