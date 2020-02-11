@@ -1,9 +1,9 @@
 package sample;
 
-import eu.hansolo.medusa.*;
+import eu.hansolo.medusa.Gauge;
+import eu.hansolo.medusa.GaugeBuilder;
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -17,21 +17,21 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
-import java.util.List;
-import java.util.Timer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.stage.Popup;
-
-import javax.swing.*;
 
 
 //TODO:
 //-Add max values for every conceivable header
+//-Fix occasional "IndexOutOfRangeException index -1 out of range 2 error popping up approx. 1/20 tests.
 //-Fix bugs listed on Jira
 
 public class Main extends Application {
@@ -47,14 +47,16 @@ public class Main extends Application {
     private boolean timerStarted = false;
     private Slider timeSlider;
     private boolean paused = false;
-    private GridPane selectedHeaders;
     @FXML
     private TableView<InputTable> selectedHeaderTitles;
     private Popup popup;
     private ComboBox<String> typeChooserTemplate;
+    private Label timeLabel;
     @FXML
+    private
     TableColumn<InputTable,ComboBox<String>> dataType;
     @FXML
+    private
     TableColumn<InputTable,String> headerName;
     @Override
 
@@ -71,7 +73,7 @@ public class Main extends Application {
         Button simulationButton = new Button("Run Simulation");
         FileChooser fileChooser = new FileChooser();
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage));
-        selectedHeaders = new GridPane();
+        GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
         selectedHeaders.addColumn(0,selectedHeaderTitles);
@@ -83,7 +85,7 @@ public class Main extends Application {
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
-        chooseHeadersBox.getChildren().addAll(headerPicker,addHeader,selectedHeaders);
+        chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
         centreBox.getChildren().addAll(title,fileSelectorButton,chooseHeadersBox,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
@@ -107,6 +109,8 @@ public class Main extends Application {
         selectedHeaderTitles.getColumns().addAll(headerName,dataType);
         stage.show();
     }
+
+    //Checks at least one header has been selected
     private void tryRunSimulation(Stage stage)
     {
         if (!selectedHeaderTitles.getItems().isEmpty())
@@ -118,6 +122,8 @@ public class Main extends Application {
             showPopup("Choose at least one header to display",stage);
         }
     }
+
+    //Displays popup with given message
     private void showPopup(String message, Stage stage)
     {
         Label popupLabel = new Label(message);
@@ -221,15 +227,28 @@ public class Main extends Application {
                 gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
             } else {
                 gaugeVal = currentVal;
+                eventTimer.cancel();
+                timerStarted = false;
             }
-            gauges.get(i).setValue(gaugeVal);
+            try {
+                final int x = i;
+                Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+            } catch (NullPointerException e){
+                System.out.println("Data value at indices " + currentStep + ", " + i+1 + "appears to be null.");
+            }
         }
         final float muStep = (float) updateFrequency/5000;
         mu = roundToDP((mu+muStep)%1, (int) Math.ceil(Math.log(1/(double) muStep)));
         if (mu == 0){
             currentStep++;
         }
-        timeSlider.setValue((currentStep+mu)*5);
+        Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
+        UpdateTimeLabel();
+    }
+
+    //Updates time label in FX thread
+    private void UpdateTimeLabel(){
+        Platform.runLater(() -> timeLabel.setText((currentStep + mu) * 5 +"s"));
     }
 
     //Rounds float to a positive number of decimal places
@@ -319,12 +338,21 @@ public class Main extends Application {
         playbackButton.setGraphic(imgView);
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
         bp.setCenter(gp);
+        VBox topVBox = new VBox();
+        timeLabel = new Label("hi");
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setMajorTickUnit(updateFrequency/1000f);
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
         timeSlider.setSnapToTicks(true);
         timeSlider.prefWidthProperty().bind(topHBox.widthProperty());
-        topHBox.getChildren().addAll(playbackButton, timeSlider);
+        timeSlider.setOnMousePressed((MouseEvent event) -> PauseTimer(playbackButton));
+        timeSlider.setOnMouseReleased(event -> {
+            currentStep = (int) Math.floor(timeSlider.getValue())/5;
+            mu = ((float)Math.floor(timeSlider.getValue()) - currentStep*5)/((float) (5000/updateFrequency));
+            UpdateTimeLabel();
+        });
+        topVBox.getChildren().addAll(timeSlider, timeLabel);
+        topHBox.getChildren().addAll(playbackButton, topVBox);
         bp.setTop(topHBox);
         initialiseGauges(selectedHeaderTitles, gp);
         return new Scene(bp, 640, 480);
@@ -333,14 +361,29 @@ public class Main extends Application {
     //Handles stopping and starting of playback
     private void playBackHandler(Button b){
         if (!paused) {
+            PauseTimer(b);
+        }
+        else {
+            ResumeTimer(b);
+        }
+    }
+
+    //Pauses timer
+    private void PauseTimer(Button b){
+        if (!paused){
             eventTimer.cancel();
             Image image = new Image(getClass().getResourceAsStream("res/PlayIcon.png"));
             ImageView imgView = new ImageView(image);
             imgView.fitWidthProperty().bind(b.widthProperty());
             imgView.fitHeightProperty().bind(b.heightProperty());
             b.setGraphic(imgView);
+            paused = true;
         }
-        else {
+    }
+
+    //Resumes timer
+    private void ResumeTimer(Button b){
+        if (paused) {
             eventTimer = new Timer();
             TimerTask task = new EventTimerTask(this);
             eventTimer.schedule(task, 0, updateFrequency);
@@ -349,8 +392,8 @@ public class Main extends Application {
             imgView.fitWidthProperty().bind(b.widthProperty());
             imgView.fitHeightProperty().bind(b.heightProperty());
             b.setGraphic(imgView);
+            paused = false;
         }
-        paused = !paused;
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
