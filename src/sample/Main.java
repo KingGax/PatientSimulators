@@ -339,7 +339,7 @@ public class Main extends Application {
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
         bp.setCenter(gp);
         VBox topVBox = new VBox();
-        timeLabel = new Label("hi");
+        timeLabel = new Label();
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setMajorTickUnit(updateFrequency/1000f);
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
