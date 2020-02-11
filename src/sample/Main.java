@@ -2,10 +2,14 @@ package sample;
 
 import eu.hansolo.medusa.*;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -18,9 +22,12 @@ import javafx.stage.Stage;
 import java.io.*;
 import java.util.*;
 import java.util.List;
+import java.util.Timer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javafx.stage.Popup;
+
+import javax.swing.*;
 
 
 //TODO:
@@ -40,8 +47,15 @@ public class Main extends Application {
     private boolean timerStarted = false;
     private Slider timeSlider;
     private boolean paused = false;
+    private GridPane selectedHeaders;
+    @FXML
+    private TableView<InputTable> selectedHeaderTitles;
     private Popup popup;
-
+    private ComboBox<String> typeChooserTemplate;
+    @FXML
+    TableColumn<InputTable,ComboBox<String>> dataType;
+    @FXML
+    TableColumn<InputTable,String> headerName;
     @Override
 
     //Initial scene setup
@@ -49,18 +63,23 @@ public class Main extends Application {
         reader = null;
         popup = new Popup();
         popup.setAutoHide(true);
+        typeChooserTemplate = new ComboBox<>();
+        typeChooserTemplate.getItems().addAll("Default Gauge","Test");
+        typeChooserTemplate.setPromptText("Default Gauge");
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
         Button simulationButton = new Button("Run Simulation");
         FileChooser fileChooser = new FileChooser();
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage));
-        ListView<String>selectedHeaders = new ListView<>();
-        selectedHeaders.setOnMouseClicked(e -> handleMouse(e,selectedHeaders));
+        selectedHeaders = new GridPane();
+        selectedHeaderTitles = new TableView<>();
+        selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
+        selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
         headerPicker.setMaxWidth(300);
         Button addHeader = new Button("Add Header");
-        addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaders));
+        addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
@@ -73,13 +92,31 @@ public class Main extends Application {
         header.setMinHeight(30);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
-        Scene welcome = new Scene(borderPane, 640, 480);
+        Scene welcome = new Scene(borderPane, 960, 720);
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
-        simulationButton.setOnAction(e->stage.setScene(getDashboardScene(selectedHeaders)));
+        simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
+        headerName = new TableColumn<>();
+        headerName.setMinWidth(40);
+        headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
+        dataType = new TableColumn<>();
+        dataType.setMinWidth(150);
+        dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
+        selectedHeaderTitles.getColumns().addAll(headerName,dataType);
         stage.show();
+    }
+    private void tryRunSimulation(Stage stage)
+    {
+        if (!selectedHeaderTitles.getItems().isEmpty())
+        {
+            stage.setScene(getDashboardScene());
+        }
+        else
+        {
+            showPopup("Choose at least one header to display",stage);
+        }
     }
     private void showPopup(String message, Stage stage)
     {
@@ -154,13 +191,13 @@ public class Main extends Application {
     }
 
     //Programmatically creates gauges and stores them in global list, starts timer
-    private void initialiseGauges(ListView<String>selectedItems, GridPane pane){
+    private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
         for (int i = 0; i < selectedItems.getItems().size(); i++){
-            String currentItem = selectedItems.getItems().get(i);
+            String currentItem = selectedItems.getItems().get(i).headerName;
             Gauge gauge = builder.decimals(getDecimals(currentItem)).maxValue(getMaxValue(currentItem)).unit(getUnit(currentItem)).build();
-            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i), Color.rgb(77,208,225), gauge);
+            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
             gauges.add(gauge);
         }
@@ -235,25 +272,38 @@ public class Main extends Application {
     }
 
     //Handles mouse interaction with ListView
-    private void handleMouse(MouseEvent click, ListView<String> selectedHeaders){
+    private void handleMouse(MouseEvent click, TableView<InputTable> selectedHeaders){
         if (click.getClickCount() == 2) {
             //Use ListView's getSelected Item
             selectedHeaders.getItems().remove(selectedHeaders.getSelectionModel().getSelectedItem());
         }
     }
-
+    //Checks if the header name is already present
+    private boolean checkItemPresent(String item, TableView<InputTable> tv){
+        for (InputTable i: tv.getItems()) {
+            if (i.headerName.compareTo(item) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
     //Attempts to add item to ListView
-    private void tryAddItem(String item, ListView<String> lv)
+    private void tryAddItem(String item, TableView<InputTable> tv)
     {
-        if (!lv.getItems().contains(item)&&(item!=null)){
-            lv.getItems().add(item);
+        if (!checkItemPresent(item,tv)&&(item!=null)){
+
+            ComboBox<String> typePicker = new ComboBox<>();
+            typePicker.getItems().addAll(typeChooserTemplate.getItems());
+            typePicker.setPromptText(typeChooserTemplate.getPromptText());
+            tv.getItems().add(new InputTable(item,typePicker));
         }
     }
 
     //Setup for dashboard JavaFX scene
-    private Scene getDashboardScene(ListView<String>selectedItems)
+    private Scene getDashboardScene()
     {
-        fillDataArray(selectedItems);
+        fillDataArray(selectedHeaderTitles);
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox topHBox = new HBox();
@@ -276,7 +326,7 @@ public class Main extends Application {
         timeSlider.prefWidthProperty().bind(topHBox.widthProperty());
         topHBox.getChildren().addAll(playbackButton, timeSlider);
         bp.setTop(topHBox);
-        initialiseGauges(selectedItems, gp);
+        initialiseGauges(selectedHeaderTitles, gp);
         return new Scene(bp, 640, 480);
     }
 
@@ -304,10 +354,10 @@ public class Main extends Application {
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
-    private void fillDataArray(ListView<String>selectedItems){
+    private void fillDataArray(TableView<InputTable>selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
-            selectedItemsArr[i] = selectedItems.getItems().get(i-1);
+            selectedItemsArr[i] = selectedItems.getItems().get(i-1).headerName;
         }
         selectedItemsArr[0] = "PatientTime";
         dataArray = new float[rowCount-1][selectedItemsArr.length];
@@ -397,6 +447,7 @@ public class Main extends Application {
                 String commaSep = reader.readLine();
                 reader.reset();
                 fillComboBoxFromReader(commaSep);
+                selectedHeaderTitles.getItems().clear();
             } catch (IOException ex) {
                 System.out.println("IOException in printing file");
             }
