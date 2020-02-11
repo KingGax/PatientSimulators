@@ -20,6 +20,8 @@ import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javafx.stage.Popup;
+
 
 //TODO:
 //-Add max values for every conceivable header
@@ -38,11 +40,15 @@ public class Main extends Application {
     private boolean timerStarted = false;
     private Slider timeSlider;
     private boolean paused = false;
+    private Popup popup;
+
     @Override
 
     //Initial scene setup
     public void start(Stage stage) {
         reader = null;
+        popup = new Popup();
+        popup.setAutoHide(true);
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
         Button simulationButton = new Button("Run Simulation");
@@ -52,6 +58,7 @@ public class Main extends Application {
         selectedHeaders.setOnMouseClicked(e -> handleMouse(e,selectedHeaders));
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
+        headerPicker.setMaxWidth(300);
         Button addHeader = new Button("Add Header");
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaders));
         HBox chooseHeadersBox = new HBox(20);
@@ -60,6 +67,10 @@ public class Main extends Application {
         chooseHeadersBox.getChildren().addAll(headerPicker,addHeader,selectedHeaders);
         centreBox.getChildren().addAll(title,fileSelectorButton,chooseHeadersBox,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
+        HBox header = new HBox(20);
+        header.getChildren().addAll(title);
+        header.setAlignment(Pos.CENTER);
+        header.setMinHeight(30);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
         Scene welcome = new Scene(borderPane, 640, 480);
@@ -67,9 +78,20 @@ public class Main extends Application {
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->stage.setScene(getDashboardScene(selectedHeaders)));
+        borderPane.setTop(header);
         stage.show();
     }
+    private void showPopup(String message, Stage stage)
+    {
+        Label popupLabel = new Label(message);
+        popupLabel.setStyle(" -fx-background-color: orangered;");// set background
+        popupLabel.setMinWidth(80); // set size of label
+        popupLabel.setMinHeight(50);
+        popup.getContent().clear();
+        popup.getContent().add(popupLabel);// add the label
+        popup.show(stage,stage.getScene().getWindow().getX() + 5,stage.getScene().getWindow().getY() + 20);
 
+    }
     //Returns the maximum value a heading should ever have
     private int getMaxValue(String val){
         switch (val){
@@ -351,15 +373,25 @@ public class Main extends Application {
             return outVal;
         }
     }
+    private String getFileExtension(String path)
+    {
+        int i = path.lastIndexOf('.');
+        int p = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
 
+        if (i > p) {
+            return path.substring(i+1);
+        }
+        return "";
+    }
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser,Stage stage){
         File file = fileChooser.showOpenDialog(stage);
-        try {
-            reader = new BufferedReader(new FileReader(file));
-        } catch (IOException ex){
-            System.out.println("IOException in opening file");
-        }
+        if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
+            try {
+                reader = new BufferedReader(new FileReader(file));
+            } catch (IOException ex){
+                System.out.println("IOException in opening file");
+            }
             try {
                 reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
                 String commaSep = reader.readLine();
@@ -378,7 +410,13 @@ public class Main extends Application {
             } catch (IOException ex) {
                 System.out.println("IOException in counting rows");
             }
-
+        }
+        else if (file != null){
+            if (getFileExtension(file.getPath()).compareTo("csv")!=0)
+            {
+                showPopup("Please choose a CSV file",stage);
+            }
+        }
     }
 
     //Fills ComboBox items with appropriate contents from csv file
