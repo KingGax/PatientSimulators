@@ -28,6 +28,14 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 
 //TODO:
 //-Add max values for every conceivable header
@@ -46,6 +54,7 @@ public class Main extends Application {
     private Timer eventTimer;
     private boolean timerStarted = false;
     private Slider timeSlider;
+    private ArrayList<Pair> eventLog = new ArrayList<>();
     private boolean paused = false;
     @FXML
     private TableView<InputTable> selectedHeaderTitles;
@@ -65,14 +74,17 @@ public class Main extends Application {
         reader = null;
         popup = new Popup();
         popup.setAutoHide(true);
+        //eventLog = new ArrayList<>();
         typeChooserTemplate = new ComboBox<>();
         typeChooserTemplate.getItems().addAll("Default Gauge","Test");
         typeChooserTemplate.setPromptText("Default Gauge");
+        FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
+        Button eventLogSelecter = new Button("Select Event Log");
         Button simulationButton = new Button("Run Simulation");
-        FileChooser fileChooser = new FileChooser();
-        fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage));
+        fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
+        eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
         GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
@@ -82,11 +94,14 @@ public class Main extends Application {
         headerPicker.setMaxWidth(300);
         Button addHeader = new Button("Add Header");
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
+        HBox fileSelectionBox = new HBox(15);
+        fileSelectionBox.setAlignment(Pos.CENTER);
+        fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter);
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
         chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
-        centreBox.getChildren().addAll(title,fileSelectorButton,chooseHeadersBox,simulationButton);
+        centreBox.getChildren().addAll(title,fileSelectionBox,chooseHeadersBox,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
         header.getChildren().addAll(title);
@@ -109,7 +124,27 @@ public class Main extends Application {
         selectedHeaderTitles.getColumns().addAll(headerName,dataType);
         stage.show();
     }
-
+    private void openEventLog()
+    {
+        String line;
+        try{
+            eventLog.clear();
+            line = reader.readLine();
+            while (line != null){if (line.compareTo("SCE Time, Message,") == 0) break; line = reader.readLine();} //reading to start of data
+            while ((line = reader.readLine()) != null) {
+                String[] item = line.split(",");                 //item[] is each row of csv file
+                String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
+                int i =Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
+                Pair p = new Pair(i,item[1]);
+                eventLog.add(p);
+            }
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        /*for (int i = 0; i < eventLog.size(); i++) {
+            System.out.println(eventLog.get(i).getTime() + " " + eventLog.get(i).getEvent());
+        }*/
+    }
     //Checks at least one header has been selected
     private void tryRunSimulation(Stage stage)
     {
@@ -477,32 +512,19 @@ public class Main extends Application {
         return "";
     }
     //Prompts user to select a file and stores contents in BufferedReader reader
-    private void openFile(FileChooser fileChooser,Stage stage){
+    private void openFile(FileChooser fileChooser,Stage stage,boolean eventsLog){
         File file = fileChooser.showOpenDialog(stage);
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
                 reader = new BufferedReader(new FileReader(file));
+                if (eventsLog){
+                    openEventLog();
+                }
+                else {
+                    openData(file);
+                }
             } catch (IOException ex){
                 System.out.println("IOException in opening file");
-            }
-            try {
-                reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
-                String commaSep = reader.readLine();
-                reader.reset();
-                fillComboBoxFromReader(commaSep);
-                selectedHeaderTitles.getItems().clear();
-            } catch (IOException ex) {
-                System.out.println("IOException in printing file");
-            }
-            try{
-                BufferedReader rowReader = new BufferedReader(new FileReader(file));
-                rowCount = 0;
-                while (rowReader.readLine() != null) {
-                    rowCount++;
-                }
-                rowReader.close();
-            } catch (IOException ex) {
-                System.out.println("IOException in counting rows");
             }
         }
         else if (file != null){
@@ -512,7 +534,27 @@ public class Main extends Application {
             }
         }
     }
-
+    private void openData(File file){
+        try {
+            reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
+            String commaSep = reader.readLine();
+            reader.reset();
+            fillComboBoxFromReader(commaSep);
+            selectedHeaderTitles.getItems().clear();
+        } catch (IOException ex) {
+            System.out.println("IOException in printing file");
+        }
+        try{
+            BufferedReader rowReader = new BufferedReader(new FileReader(file));
+            rowCount = 0;
+            while (rowReader.readLine() != null) {
+                rowCount++;
+            }
+            rowReader.close();
+        } catch (IOException ex) {
+            System.out.println("IOException in counting rows");
+        }
+    }
     //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
