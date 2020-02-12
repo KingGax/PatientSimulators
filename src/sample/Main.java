@@ -61,12 +61,7 @@ public class Main extends Application {
     private Popup popup;
     private ComboBox<String> typeChooserTemplate;
     private Label timeLabel;
-    @FXML
-    private
-    TableColumn<InputTable,ComboBox<String>> dataType;
-    @FXML
-    private
-    TableColumn<InputTable,String> headerName;
+
     @Override
 
     //Initial scene setup
@@ -115,13 +110,13 @@ public class Main extends Application {
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
-        headerName = new TableColumn<>();
+        TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
-        dataType = new TableColumn<>();
+        TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(150);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
-        selectedHeaderTitles.getColumns().addAll(headerName,dataType);
+        selectedHeaderTitles.getColumns().addAll(headerName, dataType);
         stage.show();
     }
     private void openEventLog()
@@ -295,7 +290,6 @@ public class Main extends Application {
         }
     }
 
-
     //Setup for TopicBox
     private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
         Rectangle bar = new Rectangle(200, 3);
@@ -357,7 +351,7 @@ public class Main extends Application {
     //Setup for dashboard JavaFX scene
     private Scene getDashboardScene()
     {
-        fillDataArray(selectedHeaderTitles);
+        dataArray = fillDataArray(selectedHeaderTitles, reader);
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox topHBox = new HBox();
@@ -432,15 +426,15 @@ public class Main extends Application {
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
-    private void fillDataArray(TableView<InputTable>selectedItems){
+    private float[][] fillDataArray(TableView<InputTable>selectedItems, BufferedReader reader){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
             selectedItemsArr[i] = selectedItems.getItems().get(i-1).headerName;
         }
         selectedItemsArr[0] = "PatientTime";
-        dataArray = new float[rowCount-1][selectedItemsArr.length];
+        float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
         int[][] offSetArray = new int [selectedItemsArr.length][2];
-        for (int i=0; i < dataArray.length+1; i++){
+        for (int i=0; i < datArray.length+1; i++){
             String[] tempData = new String[1];
             try{
                 tempData = reader.readLine().split(", ");
@@ -449,22 +443,23 @@ public class Main extends Application {
                 System.out.println("IOException in reading from file.");
             }
             if (i == 0){
-                for (int j = 0; j < dataArray[0].length; j++){
+                for (int j = 0; j < datArray[0].length; j++){
                     offSetArray[j][0] = j;
                     offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsArr[j]);
                 }
             } else {
-                for (int j = 0; j < dataArray[i-1].length; j++) {
+                for (int j = 0; j < datArray[i-1].length; j++) {
                     if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
-                        dataArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
+                        datArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
                     } else if (offSetArray[j][1] == 2) { //Date
-                        dataArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
+                        datArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
                     } else { //Regular float
-                        dataArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                        datArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
                     }
                 }
             }
         }
+        return datArray;
     }
 
     //Potentially no longer needed
