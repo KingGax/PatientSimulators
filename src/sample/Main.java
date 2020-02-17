@@ -2,6 +2,8 @@ package sample;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
+import eu.hansolo.medusa.Section;
+import eu.hansolo.medusa.skins.GaugeSkin;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -71,8 +73,7 @@ public class Main extends Application {
         popup.setAutoHide(true);
         //eventLog = new ArrayList<>();
         typeChooserTemplate = new ComboBox<>();
-        typeChooserTemplate.getItems().addAll("Default Gauge","Test");
-        typeChooserTemplate.setPromptText("Default Gauge");
+        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
@@ -82,12 +83,15 @@ public class Main extends Application {
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
         GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
+        selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
+
         selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
-        headerPicker.setMaxWidth(300);
+        headerPicker.setMinWidth(200);
         Button addHeader = new Button("Add Header");
+        addHeader.setMinWidth(200);
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
         HBox fileSelectionBox = new HBox(15);
         fileSelectionBox.setAlignment(Pos.CENTER);
@@ -96,6 +100,7 @@ public class Main extends Application {
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
         chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
+        selectedHeaderTitles.prefWidthProperty().bind(chooseHeadersBox.widthProperty());
         centreBox.getChildren().addAll(title,fileSelectionBox,chooseHeadersBox,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
@@ -104,6 +109,7 @@ public class Main extends Application {
         header.setMinHeight(30);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
+        BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
         Scene welcome = new Scene(borderPane, 960, 720);
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
@@ -112,10 +118,12 @@ public class Main extends Application {
         borderPane.setTop(header);
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
+        headerName.setText("Heading");
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(150);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
+        dataType.setText("Gauge Type");
         selectedHeaderTitles.getColumns().addAll(headerName, dataType);
         stage.show();
     }
@@ -225,14 +233,21 @@ public class Main extends Application {
                 return 0;
         }
     }
-
+    private Gauge.SkinType translateStringToGaugeType(String title){
+        switch (title){
+            case "Simple Section":
+                return Gauge.SkinType.SIMPLE_SECTION;
+            default:
+                return Gauge.SkinType.SLIM;
+        }
+    }
     //Programmatically creates gauges and stores them in global list, starts timer
     private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
-        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
         for (int i = 0; i < selectedItems.getItems().size(); i++){
-            String currentItem = selectedItems.getItems().get(i).headerName;
-            Gauge gauge = builder.decimals(getDecimals(currentItem)).maxValue(getMaxValue(currentItem)).unit(getUnit(currentItem)).build();
+            Gauge.SkinType type = translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
+            String header = selectedItems.getItems().get(i).headerName;
+            Gauge gauge = buildGauge(type,header);
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
             gauges.add(gauge);
@@ -246,7 +261,20 @@ public class Main extends Application {
         eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
         timerStarted = true;
     }
-
+    private Gauge buildGauge(Gauge.SkinType type, String name){
+        Gauge newGauge;
+        if (type == Gauge.SkinType.SIMPLE_SECTION){
+            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
+            newGauge = builder.decimals(getDecimals(name)).maxValue(getMaxValue(name)).unit(getUnit(name)).build();
+            newGauge.setBarColor(Color.rgb(77,208,225));
+            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setAnimated(true);
+            return newGauge;
+        }
+        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
+        newGauge = builder.decimals(getDecimals(name)).maxValue(getMaxValue(name)).unit(getUnit(name)).build();
+        return newGauge;
+    }
     //Updates gauges at a regular interval, called by EventTimerTask.run()
     void updateGauges(){
         for (int i = 0; i < gauges.size(); i++) {
@@ -302,10 +330,6 @@ public class Main extends Application {
         label.setAlignment(Pos.CENTER);
         label.setPadding(new Insets(0, 0, 10, 0));
 
-        GAUGE.setBarColor(COLOR);
-        GAUGE.setBarBackgroundColor(Color.rgb(39,44,50));
-        GAUGE.setAnimated(true);
-
         VBox vBox = new VBox(bar, label, GAUGE);
         vBox.setSpacing(3);
         vBox.setAlignment(Pos.CENTER);
@@ -343,7 +367,7 @@ public class Main extends Application {
 
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
-            typePicker.setPromptText(typeChooserTemplate.getPromptText());
+            typePicker.getSelectionModel().selectFirst();
             tv.getItems().add(new InputTable(item,typePicker));
         }
     }

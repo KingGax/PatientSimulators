@@ -21,4 +21,5 @@ public class InputTable {
     public ComboBox<String> getOptions(){
         return this.options;
     }
+    public String selectedValue() {return  options.getValue();}
 }
