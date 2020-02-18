@@ -265,10 +265,12 @@ public class Main extends Application {
         Gauge newGauge;
         if (type == Gauge.SkinType.SIMPLE_SECTION){
             GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
+            Section section = new Section((getMaxValue(name) / 2 - 15),(getMaxValue(name) / 2 + 20),Color.GREEN);
             newGauge = builder.decimals(getDecimals(name)).maxValue(getMaxValue(name)).unit(getUnit(name)).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
+            newGauge.getSections().add(section);
             return newGauge;
         }
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
