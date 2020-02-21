@@ -304,6 +304,8 @@ public class Main extends Application {
         }
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.MODERN);
         newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
+        Section section = new Section((getMaxValue(data.headerName) / 2 - 15),(getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
+        newGauge.getSections().add(section);
         return newGauge;
     }
     //Updates gauges at a regular interval, called by EventTimerTask.run()
