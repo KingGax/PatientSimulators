@@ -73,7 +73,7 @@ public class Main extends Application {
         popup.setAutoHide(true);
         //eventLog = new ArrayList<>();
         typeChooserTemplate = new ComboBox<>();
-        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section");
+        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         Button fileSelectorButton = new Button("Select File");
@@ -123,8 +123,16 @@ public class Main extends Application {
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(150);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
+        TableColumn<InputTable, TextField> minVal = new TableColumn<>();
+        minVal.setMinWidth(80);
+        minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
+        minVal.setText("Min");
+        TableColumn<InputTable, TextField> maxVal = new TableColumn<>();
+        maxVal.setMinWidth(80);
+        maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
+        maxVal.setText("Max");
         dataType.setText("Gauge Type");
-        selectedHeaderTitles.getColumns().addAll(headerName, dataType);
+        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
         stage.show();
     }
     private void openEventLog()
@@ -237,6 +245,8 @@ public class Main extends Application {
         switch (title){
             case "Simple Section":
                 return Gauge.SkinType.SIMPLE_SECTION;
+            case "Line Graph":
+                return Gauge.SkinType.TILE_SPARK_LINE;
             default:
                 return Gauge.SkinType.SLIM;
         }
@@ -247,7 +257,7 @@ public class Main extends Application {
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge.SkinType type = translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             String header = selectedItems.getItems().get(i).headerName;
-            Gauge gauge = buildGauge(type,header);
+            Gauge gauge = buildGauge(type,selectedItems.getItems().get(i));
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox, i%2, i /2);
             gauges.add(gauge);
@@ -261,20 +271,39 @@ public class Main extends Application {
         eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
         timerStarted = true;
     }
-    private Gauge buildGauge(Gauge.SkinType type, String name){
+    private Gauge buildGauge(Gauge.SkinType type, InputTable data){
         Gauge newGauge;
+        int maxValue, minValue;
+        try {
+            maxValue = Integer.parseInt(data.getMax().getText());
+        }catch(Exception e){
+          maxValue = getMaxValue(data.headerName);
+        }
+        try {
+            minValue = Integer.parseInt(data.getMin().getText());
+        }catch(Exception e){
+            minValue = 0;
+        }
         if (type == Gauge.SkinType.SIMPLE_SECTION){
             GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
-            Section section = new Section((getMaxValue(name) / 2 - 15),(getMaxValue(name) / 2 + 20),Color.GREEN);
-            newGauge = builder.decimals(getDecimals(name)).maxValue(getMaxValue(name)).unit(getUnit(name)).build();
+            Section section = new Section((getMaxValue(data.headerName) / 2 - 15),(getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
+            newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
             newGauge.getSections().add(section);
             return newGauge;
         }
-        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SLIM);
-        newGauge = builder.decimals(getDecimals(name)).maxValue(getMaxValue(name)).unit(getUnit(name)).build();
+        if (type == Gauge.SkinType.TILE_SPARK_LINE) {
+            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.TILE_SPARK_LINE);
+            newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
+            newGauge.setBarColor(Color.rgb(77,208,225));
+            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setAnimated(true);
+            return newGauge;
+        }
+        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.MODERN);
+        newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
         return newGauge;
     }
     //Updates gauges at a regular interval, called by EventTimerTask.run()
@@ -370,7 +399,11 @@ public class Main extends Application {
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
             typePicker.getSelectionModel().selectFirst();
-            tv.getItems().add(new InputTable(item,typePicker));
+            TextField min = new TextField();
+            min.textProperty().setValue("0");
+            TextField max = new TextField();
+            max.textProperty().setValue(Integer.toString(getMaxValue(item)));
+            tv.getItems().add(new InputTable(item,typePicker,min,max));
         }
     }
 
