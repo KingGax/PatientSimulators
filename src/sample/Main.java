@@ -171,92 +171,22 @@ public class Main extends Application {
     }
 
     //Displays popup with given message
-    private void showPopup(String message, Stage stage)
-    {
+    private void showPopup(String message, Stage stage) {
         Label popupLabel = new Label(message);
         popupLabel.setStyle(" -fx-background-color: orangered;");// set background
         popupLabel.setMinWidth(80); // set size of label
         popupLabel.setMinHeight(50);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(stage,stage.getScene().getWindow().getX() + 5,stage.getScene().getWindow().getY() + 20);
-
-    }
-    //Returns the maximum value a heading should ever have
-    private int getMaxValue(String val){
-        switch (val){
-            case "HR":
-                return 200;
-            case "SBP":
-                return 140;
-            case "DBP":
-                return 100;
-            case "MAP":
-                return 100;
-            case "CVP":
-                return 10;
-            case "VT":
-                return 600;
-            default:
-                return -1;
-        }
+        popup.show(stage, stage.getScene().getWindow().getX() + 5, stage.getScene().getWindow().getY() + 20);
 
     }
 
-    //Returns the unit for a given heading
-    private String getUnit(String val){
-        switch (val){
-            case "HR":
-                return "BPM";
-            case "SBP":
-                return "SBP";
-            case "DBP":
-                return "DBP";
-            case "MAP":
-                return "MAP";
-            case "CVP":
-                return "CVP";
-            case "VT":
-                return "VT";
-            default:
-                return "N/A";
-        }
-    }
-
-    //Returns number of decimal places needed to display a given heading
-    private int getDecimals(String val){
-        switch (val){
-            case "HR":
-                return 0;
-            case "SBP":
-                return 0;
-            case "DBP":
-                return 0;
-            case "MAP":
-                return 1;
-            case "CVP":
-                return 0;
-            case "VT":
-                return 0;
-            default:
-                return 0;
-        }
-    }
-    private Gauge.SkinType translateStringToGaugeType(String title){
-        switch (title){
-            case "Simple Section":
-                return Gauge.SkinType.SIMPLE_SECTION;
-            case "Line Graph":
-                return Gauge.SkinType.TILE_SPARK_LINE;
-            default:
-                return Gauge.SkinType.SLIM;
-        }
-    }
     //Programmatically creates gauges and stores them in global list, starts timer
     private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         for (int i = 0; i < selectedItems.getItems().size(); i++){
-            Gauge.SkinType type = translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
+            Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             String header = selectedItems.getItems().get(i).headerName;
             Gauge gauge = buildGauge(type,selectedItems.getItems().get(i));
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
@@ -278,7 +208,7 @@ public class Main extends Application {
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
         }catch(Exception e){
-          maxValue = getMaxValue(data.headerName);
+          maxValue = PureFunctions.getMaxValue(data.headerName);
         }
         try {
             minValue = Integer.parseInt(data.getMin().getText());
@@ -287,8 +217,8 @@ public class Main extends Application {
         }
         if (type == Gauge.SkinType.SIMPLE_SECTION){
             GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
-            Section section = new Section((getMaxValue(data.headerName) / 2 - 15),(getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
-            newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
+            Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
@@ -297,15 +227,15 @@ public class Main extends Application {
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
             GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.TILE_SPARK_LINE);
-            newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
             return newGauge;
         }
         GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.MODERN);
-        newGauge = builder.decimals(getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(getUnit(data.headerName)).build();
-        Section section = new Section((getMaxValue(data.headerName) / 2 - 15),(getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
+        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
+        Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
         newGauge.getSections().add(section);
         return newGauge;
     }
@@ -405,7 +335,7 @@ public class Main extends Application {
             TextField min = new TextField();
             min.textProperty().setValue("0");
             TextField max = new TextField();
-            max.textProperty().setValue(Integer.toString(getMaxValue(item)));
+            max.textProperty().setValue(Integer.toString(PureFunctions.getMaxValue(item)));
             tv.getItems().add(new InputTable(item,typePicker,min,max));
         }
     }
