@@ -6,6 +6,8 @@ import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.skins.GaugeSkin;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -71,6 +73,7 @@ public class Main extends Application {
         reader = null;
         popup = new Popup();
         popup.setAutoHide(true);
+        //ColorPicker test = new ColorPicker();
         //eventLog = new ArrayList<>();
         typeChooserTemplate = new ComboBox<>();
         typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph");
@@ -112,6 +115,8 @@ public class Main extends Application {
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
         BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
+        //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
+        //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
@@ -135,8 +140,56 @@ public class Main extends Application {
         maxVal.setText("Max");
         dataType.setText("Gauge Type");
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
+        //borderPane.setCenter(new ColorPicker());
         stage.show();
     }
+    /*public void start(Stage s)
+    {
+        // set title for the stage
+        s.setTitle("creating color picker");
+
+        // create a tile pane
+        TilePane r = new TilePane();
+        BorderPane b = new BorderPane();
+        b.setCenter(r);
+        // create a label
+        Label l = new Label("This is a color picker example ");
+        Label l1 = new Label("no selected color ");
+
+        // create a color picker
+        ColorPicker cp = new ColorPicker();
+        ColorPicker cp2 = new ColorPicker();
+
+        // create a event handler
+        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
+            public void handle(ActionEvent e)
+            {
+                // color
+                Color c = cp.getValue();
+
+                // set text of the label to RGB value of color
+                l1.setText("Red = " + c.getRed() + ", Green = " + c.getGreen()
+                        + ", Blue = " + c.getBlue());
+            }
+        };
+
+        // set listener
+        cp.setOnAction(event);
+
+        // add label
+        r.getChildren().add(l);
+        r.getChildren().add(cp);
+        r.getChildren().add(cp2);
+        r.getChildren().add(l1);
+        b.setCenter(cp);
+        // create a scene
+        Scene sc = new Scene(b, 500, 200);
+
+        // set the scene
+        s.setScene(sc);
+
+        s.show();
+    }*/
     private void openEventLog()
     {
         String line;
