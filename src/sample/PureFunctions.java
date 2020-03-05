@@ -1,6 +1,7 @@
 package sample;
 
 import eu.hansolo.medusa.Gauge;
+import eu.hansolo.medusa.skins.GaugeSkin;
 
 class PureFunctions {
     static String skinTypeToString(Gauge.SkinType type) {
@@ -12,7 +13,7 @@ class PureFunctions {
             case TILE_SPARK_LINE:
                 return "Line Graph";
             case MODERN:
-                return "Default Gauge";
+                return "Modern";
             case AMP:
                 return "Scientific Box";
             case QUARTER:
@@ -21,6 +22,8 @@ class PureFunctions {
                 return "Horizontal Half";
             case VERTICAL:
                 return "Vertical Half";
+            case GAUGE:
+                return "Default Gauge";
             default:
                 return null;
         }
@@ -89,12 +92,26 @@ class PureFunctions {
 
     static Gauge.SkinType translateStringToGaugeType(String title) {
         switch (title) {
+            case "Slim":
+                return Gauge.SkinType.SLIM;
             case "Simple Section":
                 return Gauge.SkinType.SIMPLE_SECTION;
             case "Line Graph":
                 return Gauge.SkinType.TILE_SPARK_LINE;
+            case "Modern":
+                return Gauge.SkinType.MODERN;
+            case "Scientific Box":
+                return Gauge.SkinType.AMP;
+            case "Quarter Gauge":
+                return Gauge.SkinType.QUARTER;
+            case "Horizontal Half":
+                return Gauge.SkinType.HORIZONTAL;
+            case "Vertical Half":
+                return Gauge.SkinType.VERTICAL;
+            case "Default Gauge":
+                return Gauge.SkinType.GAUGE;
             default:
-                return Gauge.SkinType.SLIM;
+                return null;
         }
     }
 }
