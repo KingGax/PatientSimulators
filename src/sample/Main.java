@@ -86,7 +86,8 @@ public class Main extends Application {
         selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
         Button gaugeButton = new Button("Custom Gauges");
-        gaugeButton.setOnMouseClicked(e-> stage.setScene(sample.GaugeBuilder.getGaugeBuilderScene()));
+        sample.GaugeBuilder gb = new sample.GaugeBuilder();
+        gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene()));
         selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");

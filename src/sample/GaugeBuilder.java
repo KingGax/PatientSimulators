@@ -17,15 +17,18 @@ import javafx.scene.layout.Background;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.stage.Window;
 
 import javax.swing.*;
 
 
 public class GaugeBuilder {
-    static Gauge currentGauge;
-    static Scene getGaugeBuilderScene()
+    private Gauge currentGauge;
+    private Color foregroundColour;
+    public Scene getGaugeBuilderScene()
     {
+        foregroundColour = Color.WHITE;
         BorderPane borderPane = new BorderPane();
         BorderPane editSection = new BorderPane();
         ComboBox<String> selectEditType = new ComboBox<>();
@@ -64,7 +67,7 @@ public class GaugeBuilder {
         Scene scene = new Scene(borderPane, 960, 720);
         return scene;
     }
-    static VBox getColourBox(){
+    private VBox getColourBox(){
         VBox colourBox = new VBox(10);
 
         VBox needleColourVBox = new VBox(0);
@@ -81,12 +84,19 @@ public class GaugeBuilder {
         backgroundPaintVBox.getChildren().addAll(backgroundPaintLabel,backgroundPaintColorPicker);
         backgroundPaintColorPicker.setOnAction(e->currentGauge.setBackgroundPaint(backgroundPaintColorPicker.getValue()));
 
+        /*VBox backgroundPaintVBox = new VBox(0);
+        ColorPicker backgroundPaintColorPicker = new ColorPicker();
+        backgroundPaintColorPicker.setValue(Color.BLACK);
+        Label backgroundPaintLabel = new Label("Backdrop Colour");
+        backgroundPaintVBox.getChildren().addAll(backgroundPaintLabel,backgroundPaintColorPicker);
+        backgroundPaintColorPicker.setOnAction(e->currentGauge.setBackgroundPaint(backgroundPaintColorPicker.getValue()));*/
+
         VBox foregroundColorVBox = new VBox(0);
         ColorPicker foregroundColorPicker = new ColorPicker();
         foregroundColorPicker.setValue(Color.BLACK);
         Label foregroundColorLabel = new Label("Foreground Colour");
         foregroundColorVBox.getChildren().addAll(foregroundColorLabel,foregroundColorPicker);
-        foregroundColorPicker.setOnAction(e->currentGauge.setForegroundBaseColor(foregroundColorPicker.getValue()));
+        foregroundColorPicker.setOnAction(e->{currentGauge.setForegroundBaseColor(foregroundColorPicker.getValue()); foregroundColour = foregroundColorPicker.getValue();});
 
 
         VBox borderColorVBox = new VBox(0);
@@ -101,7 +111,9 @@ public class GaugeBuilder {
         colourBox.getChildren().addAll(needleColourVBox,backgroundPaintVBox,foregroundColorVBox,borderColorVBox);
         return colourBox;
     }
-    static void updateCurrentGaugeSkin(Gauge.SkinType skin){//TODO preserve customisation between swaps
+    private void updateCurrentGaugeSkin(Gauge.SkinType skin){//TODO preserve customisation between swaps
+        Color needleColour = currentGauge.getNeedleColor();
+        Paint backgroundPaint = currentGauge.getBackgroundPaint();
         currentGauge.setSkinType(skin);
     }
 
