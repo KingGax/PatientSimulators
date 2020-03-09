@@ -1,6 +1,7 @@
 package sample;
 
 import eu.hansolo.medusa.Gauge;
+import eu.hansolo.medusa.TickMarkType;
 import eu.hansolo.medusa.skins.GaugeSkin;
 
 class PureFunctions {
@@ -110,6 +111,72 @@ class PureFunctions {
                 return Gauge.SkinType.VERTICAL;
             case "Default Gauge":
                 return Gauge.SkinType.GAUGE;
+            default:
+                return null;
+        }
+    }
+    static Gauge.NeedleType translateStringToNeedleType(String str){
+        switch (str){
+            case "Big":
+                return Gauge.NeedleType.BIG;
+            case "Fat":
+                return Gauge.NeedleType.FAT;
+            case "Standard":
+                return  Gauge.NeedleType.STANDARD;
+            case "Scientific":
+                return Gauge.NeedleType.SCIENTIFIC;
+            case "Avionic":
+                return Gauge.NeedleType.AVIONIC;
+            case "Variometer":
+                return Gauge.NeedleType.VARIOMETER;
+            default:
+                return null;
+        }
+    }
+    static Gauge.NeedleShape translateStringToNeedleShape(String str){
+        switch (str){
+            case "Flat":
+                return Gauge.NeedleShape.FLAT;
+            case "Angled":
+                return Gauge.NeedleShape.ANGLED;
+            case "Round":
+                return  Gauge.NeedleShape.ROUND;
+            default:
+                return null;
+        }
+    }
+
+    static TickMarkType translateStringToTickMarkType(String str){
+        switch (str){
+            case "Line":
+                return TickMarkType.LINE;
+            case "Dot":
+                return TickMarkType.DOT;
+            case "Trapezoid":
+                return  TickMarkType.TRAPEZOID;
+            case "Triangle":
+                return TickMarkType.TRIANGLE;
+            case "Box":
+                return TickMarkType.BOX;
+            case "Tick Label":
+                return  TickMarkType.TICK_LABEL;
+            case "Pill":
+                return  TickMarkType.PILL;
+            default:
+                return null;
+        }
+    }
+
+    public static Gauge.KnobType translateStringToknobType(String str) {
+        switch (str){
+            case "Flat":
+                return Gauge.KnobType.FLAT;
+            case "Metal":
+                return Gauge.KnobType.METAL;
+            case "Plain":
+                return  Gauge.KnobType.PLAIN;
+            case "Standard":
+                return  Gauge.KnobType.STANDARD;
             default:
                 return null;
         }
