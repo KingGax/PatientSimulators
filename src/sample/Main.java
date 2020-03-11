@@ -47,7 +47,8 @@ import java.util.regex.Pattern;
 //-Fix bugs listed on Jira
 
 public class Main extends Application {
-    private BufferedReader reader;
+    private BufferedReader dataReader;
+    private BufferedReader eventReader;
     private int rowCount;
     private List<Gauge> gauges;
     private float[][] dataArray; //Ignore this warning, dataArray to be used for gauges
@@ -70,7 +71,8 @@ public class Main extends Application {
 
     //Initial scene setup
     public void start(Stage stage) {
-        reader = null;
+        dataReader = null;
+        eventReader = null;
         popup = new Popup();
         popup.setAutoHide(true);
         //ColorPicker test = new ColorPicker();
@@ -195,9 +197,9 @@ public class Main extends Application {
         String line;
         try{
             eventLog.clear();
-            line = reader.readLine();
-            while (line != null){if (line.compareTo("SCE Time, Message,") == 0) break; line = reader.readLine();} //reading to start of data
-            while ((line = reader.readLine()) != null) {
+            line = eventReader.readLine();
+            while (line != null){if (line.compareTo("SCE Time, Message,") == 0) break; line = eventReader.readLine();} //reading to start of data
+            while ((line = eventReader.readLine()) != null) {
                 String[] item = line.split(",");                 //item[] is each row of csv file
                 String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
                 int i =Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
@@ -397,7 +399,7 @@ public class Main extends Application {
     //Setup for dashboard JavaFX scene
     private Scene getDashboardScene()
     {
-        dataArray = fillDataArray(selectedHeaderTitles, reader);
+        dataArray = fillDataArray(selectedHeaderTitles, dataReader);
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
         HBox topHBox = new HBox();
@@ -557,11 +559,12 @@ public class Main extends Application {
         File file = fileChooser.showOpenDialog(stage);
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
-                reader = new BufferedReader(new FileReader(file));
                 if (eventsLog){
+                    eventReader = new BufferedReader(new FileReader(file));
                     openEventLog();
                 }
                 else {
+                    dataReader = new BufferedReader(new FileReader(file));
                     openData(file);
                 }
             } catch (IOException ex){
@@ -577,9 +580,9 @@ public class Main extends Application {
     }
     private void openData(File file){
         try {
-            reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
-            String commaSep = reader.readLine();
-            reader.reset();
+            dataReader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
+            String commaSep = dataReader.readLine();
+            dataReader.reset();
             fillComboBoxFromReader(commaSep);
             selectedHeaderTitles.getItems().clear();
         } catch (IOException ex) {
