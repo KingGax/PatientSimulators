@@ -9,6 +9,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.BorderPane;
@@ -18,7 +19,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
-import java.awt.*;
 import java.nio.file.FileSystemLoopException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -49,25 +49,37 @@ public class GaugeBuilder {
         editSection.setTop(selectBox);
         borderPane.setLeft(editSection);
         borderPane.setCenter(gaugeBox);
-
-        Label header = new Label("build gage");
-        header.setAlignment(Pos.CENTER);
-
+        HBox footerBox = new HBox(5);
+        Label filenameLabel = new Label("Filename:");
+        footerBox.setAlignment(Pos.CENTER);
+        TextField gaugeNameTextbox = new TextField();
+        Button saveGaugeButton = new Button("Save Gauge");
+        footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton);
+        saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
+        Label header = new Label("Build Gauges");
+        HBox headerBox = new HBox();
+        headerBox.minHeight(30);
+        headerBox.setAlignment(Pos.CENTER);
+        headerBox.getChildren().add(header);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
         currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("unit").title("Title").build();
         currentGauge.setForegroundBaseColor(Color.BLACK);
         gaugeBox.getChildren().add(currentGauge);
         currentGauge.setPrefSize(800,800);
-        borderPane.setTop(header);
+        borderPane.setTop(headerBox);
+        borderPane.setBottom(footerBox);
         selectEditType.setOnAction(e->{switch (selectEditType.getValue()){
             case "Colours": editSection.setCenter(colourBox); break;
             case "Tick Marks": editSection.setCenter(tickMarkBox); break;
             case "Other": editSection.setCenter(otherBox); break;
         } });
         Event.fireEvent(selectEditType,new ActionEvent());//triggers it to show colours by default
-        //testPane.getChildren().addAll(borderPane);
         Scene scene = new Scene(borderPane, 960, 800);
         return scene;
+    }
+    private void saveCurrentGauge(String filename){
+        //TODO do
+        throw new IllegalArgumentException("implement me");
     }
     private VBox getTickMarkBox(){
         VBox tickBox = new VBox(10);
