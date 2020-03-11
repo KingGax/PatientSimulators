@@ -82,6 +82,8 @@ public class Main extends Application {
         Button fileSelectorButton = new Button("Select File");
         Button eventLogSelecter = new Button("Select Event Log");
         Button simulationButton = new Button("Run Simulation");
+        Button loadCustomGaugeButton = new Button("Load Custom Gauge");
+        loadCustomGaugeButton.setOnAction(e -> loadCustomGauge());
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
         GridPane selectedHeaders = new GridPane();
@@ -100,7 +102,7 @@ public class Main extends Application {
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
         HBox fileSelectionBox = new HBox(15);
         fileSelectionBox.setAlignment(Pos.CENTER);
-        fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter);
+        fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter,loadCustomGaugeButton);
         HBox chooseHeadersBox = new HBox(20);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
@@ -142,6 +144,9 @@ public class Main extends Application {
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
         //borderPane.setCenter(new ColorPicker());
         stage.show();
+    }
+    private void loadCustomGauge(){
+        //todo do
     }
     /*public void start(Stage s)
     {
