@@ -323,25 +323,31 @@ public class Main extends Application {
             currentStep++;
         }
         Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
-        UpdateTimeLabel();
-        UpdateEventBox();
+        updateTimeLabel();
+        updateEventBox();
     }
 
     //Updates time label in FX thread
-    private void UpdateTimeLabel(){
+    private void updateTimeLabel(){
         Platform.runLater(() -> timeLabel.setText((currentStep + mu) * 5 +"s"));
     }
 
-    private void UpdateEventBox(){
+    private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
-        final float muStep = (float) updateFrequency/5000;
-        float prevTime;
-        prevTime = roundToDP((currentStep+mu-muStep)*5, (int) Math.ceil(Math.log(1/(double)muStep)));
-        System.out.println("Prev: " + prevTime);
-        while (eventLog.get(eventIndex).getTime() >= prevTime && eventLog.get(eventIndex).getTime() <= currentTime){
+        //final float muStep = (float) updateFrequency/5000;
+        //float prevTime;
+        //prevTime = roundToDP((currentStep+mu-muStep)*5, (int) Math.ceil(Math.log(1/(double)muStep)));
+        //System.out.println("Prev: " + prevTime);
+        while (eventLog.get(eventIndex).getTime() <= currentTime){
             eventBox.getItems().add(new eventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
             eventIndex++;
         }
+    }
+
+    private void rebuildEventLog(){
+        eventBox.getItems().clear();
+        eventIndex = 0;
+        updateEventBox();
     }
 
     //Rounds float to a positive number of decimal places
@@ -426,17 +432,10 @@ public class Main extends Application {
             return time;
         }
 
-        public void setTime(int time){
-            this.time = time;
-        }
-
         public String getEvent(){
             return event;
         }
 
-        public void setEvent(String event){
-            this.event = event;
-        }
     }
 
     //Setup for dashboard JavaFX scene
@@ -476,9 +475,14 @@ public class Main extends Application {
         timeSlider.prefWidthProperty().bind(topHBox.widthProperty());
         timeSlider.setOnMousePressed((MouseEvent event) -> PauseTimer(playbackButton));
         timeSlider.setOnMouseReleased(event -> {
+            int prevStep = currentStep;
             currentStep = (int) Math.floor(timeSlider.getValue())/5;
             mu = ((float)Math.floor(timeSlider.getValue()) - currentStep*5)/((float) (5000/updateFrequency));
-            UpdateTimeLabel();
+            if (currentStep < prevStep){
+                rebuildEventLog();
+            }
+            updateEventBox();
+            updateTimeLabel();
         });
         topVBox.getChildren().addAll(timeSlider, timeLabel);
         topHBox.getChildren().addAll(playbackButton, topVBox);
