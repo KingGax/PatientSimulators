@@ -59,13 +59,15 @@ public class Main extends Application {
     private Timer eventTimer;
     private boolean timerStarted = false;
     private Slider timeSlider;
-    private ArrayList<Pair> eventLog = new ArrayList<>();
+    private ArrayList<eventData> eventLog = new ArrayList<>();
     private boolean paused = false;
     @FXML
     private TableView<InputTable> selectedHeaderTitles;
     private Popup popup;
     private ComboBox<String> typeChooserTemplate;
+    private TableView eventBox;
     private Label timeLabel;
+    private int eventIndex = 0;
 
     @Override
 
@@ -203,7 +205,7 @@ public class Main extends Application {
                 String[] item = line.split(",");                 //item[] is each row of csv file
                 String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
                 int i =Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
-                Pair p = new Pair(i,item[1]);
+                eventData p = new eventData(i,item[1]);
                 eventLog.add(p);
             }
         } catch(IOException e) {
@@ -322,11 +324,24 @@ public class Main extends Application {
         }
         Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
         UpdateTimeLabel();
+        UpdateEventBox();
     }
 
     //Updates time label in FX thread
     private void UpdateTimeLabel(){
         Platform.runLater(() -> timeLabel.setText((currentStep + mu) * 5 +"s"));
+    }
+
+    private void UpdateEventBox(){
+        float currentTime = (currentStep+mu)*5;
+        final float muStep = (float) updateFrequency/5000;
+        float prevTime;
+        prevTime = roundToDP((currentStep+mu-muStep)*5, (int) Math.ceil(Math.log(1/(double)muStep)));
+        System.out.println("Prev: " + prevTime);
+        while (eventLog.get(eventIndex).getTime() >= prevTime && eventLog.get(eventIndex).getTime() <= currentTime){
+            eventBox.getItems().add(new eventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
+            eventIndex++;
+        }
     }
 
     //Rounds float to a positive number of decimal places
@@ -396,13 +411,49 @@ public class Main extends Application {
         }
     }
 
+    public class eventData {
+        private int time;
+        private String event;
+
+        public eventData(){
+        }
+        public eventData(int time, String event) {
+            this.time = time;
+            this.event = event;
+        }
+
+        public int getTime(){
+            return time;
+        }
+
+        public void setTime(int time){
+            this.time = time;
+        }
+
+        public String getEvent(){
+            return event;
+        }
+
+        public void setEvent(String event){
+            this.event = event;
+        }
+    }
+
     //Setup for dashboard JavaFX scene
     private Scene getDashboardScene()
     {
         dataArray = fillDataArray(selectedHeaderTitles, dataReader);
         BorderPane bp = new BorderPane();
         GridPane gp = new GridPane();
+        HBox midHBox = new HBox();
         HBox topHBox = new HBox();
+        eventBox = new TableView<>();
+        TableColumn<String, eventData> timeCol = new TableColumn<>("Time");
+        timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+        TableColumn<String, eventData> eventCol = new TableColumn<>("Event");
+        eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
+        eventBox.getColumns().add(timeCol);
+        eventBox.getColumns().add(eventCol);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);
@@ -414,7 +465,8 @@ public class Main extends Application {
         imgView.fitHeightProperty().bind(playbackButton.heightProperty());
         playbackButton.setGraphic(imgView);
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
-        bp.setCenter(gp);
+        midHBox.getChildren().addAll(gp, eventBox);
+        bp.setCenter(midHBox);
         VBox topVBox = new VBox();
         timeLabel = new Label();
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
