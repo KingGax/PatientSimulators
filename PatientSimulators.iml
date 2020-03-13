@@ -7,8 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="lib" level="project" />
     <orderEntry type="library" name="Medusa-11.21" level="project" />
     <orderEntry type="library" name="medusa-4.1" level="project" />
+    <orderEntry type="library" name="openjfx-11.0" level="project" />
+    <orderEntry type="library" name="Medusa-8.0" level="project" />
   </component>
 </module>

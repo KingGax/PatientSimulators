@@ -1,0 +1,115 @@
+.table-view .filler {
+    -fx-background-color: #000000;
+}
+
+.table-view{
+   -fx-background-color: transparent;
+   -fx-border-color: white;
+}
+
+.input-table {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+    -fx-text-inner-color: white;
+}
+
+#background {
+    -fx-background-color: #000000;
+}
+
+.combo-box .list-cell
+{
+    -fx-background: black;
+    -fx-background-color: black;
+    -fx-text-fill: white;
+}
+
+.combo-box-popup .list-view
+{
+    -fx-background-color: black;
+}
+
+.combo-box-popup .list-view .list-cell:filled:selected, .combo-box-popup .list-view .list-cell:filled:selected:hover
+{
+    -fx-background: -fx-accent;
+    -fx-background-color: -fx-selection-bar;
+    -fx-text-fill: -fx-selection-bar-text;
+}
+
+.combo-box-popup .list-view .list-cell:filled:hover
+{
+    -fx-background-color: black;
+    -fx-text-fill: -fx-text-inner-color;
+}
+
+.combo-box-base
+{
+    -fx-background-color: black;
+}
+
+.button-blue {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #00CCFF;
+    -fx-border-radius: 10;
+    -fx-font-size: 2em;
+}
+
+::placeholder {
+    -fx-text-fill: #ffffff
+}
+
+.button-red {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #FF0000;
+    -fx-border-radius: 10;
+    -fx-font-size: 2em;
+}
+
+.button-yellow {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #FFFF00;
+    -fx-border-radius: 10;
+    -fx-font-size: 2em;
+}
+
+.button-green {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #66FF00;
+    -fx-border-radius: 10;
+    -fx-font-size: 3em;
+}
+
+.table-heads {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-alignment: center;
+}
+
+.column-header .label {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+}
+
+.title {
+    -fx-text-fill: #ffffff;
+    -fx-font: normal bold 4em 'serif';
+}
+
+.select-file-label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 2.4em;
+}
+
+.pop-up-warning {
+    -fx-background-color: red;
+    -fx-font: normal bold 2em 'serif';
+    -fx-text-fill: #ffffff;
+}
+
+.gauge-background {
+    -fx-background-color: #000000;
+}
