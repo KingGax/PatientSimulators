@@ -94,7 +94,6 @@ public class Main extends Application {
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
         Button gaugeButton = new Button("Custom Gauges");
         sample.GaugeBuilder gb = new sample.GaugeBuilder();
-        gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene()));
         selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
@@ -143,6 +142,7 @@ public class Main extends Application {
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         dataType.setText("Gauge Type");
+        gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
         //borderPane.setCenter(new ColorPicker());
         stage.show();

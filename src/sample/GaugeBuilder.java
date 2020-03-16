@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GaugeBuilder {
     private Gauge currentGauge;
-    public Scene getGaugeBuilderScene()
+    public Scene getGaugeBuilderScene(Scene defaultScene)
     {
         TilePane testPane = new TilePane();
         BorderPane borderPane = new BorderPane();
@@ -56,11 +56,13 @@ public class GaugeBuilder {
         Button saveGaugeButton = new Button("Save Gauge");
         footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton);
         saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e->((javafx.stage.Stage)backButton.getScene().getWindow()).setScene(defaultScene));
         Label header = new Label("Build Gauges");
         HBox headerBox = new HBox();
         headerBox.minHeight(30);
         headerBox.setAlignment(Pos.CENTER);
-        headerBox.getChildren().add(header);
+        headerBox.getChildren().addAll(header,backButton);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
         currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("unit").title("Title").build();
         currentGauge.setForegroundBaseColor(Color.BLACK);
