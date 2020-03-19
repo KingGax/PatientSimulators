@@ -2,7 +2,6 @@ package sample;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.TickLabelLocation;
-import eu.hansolo.medusa.TickLabelOrientation;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Insets;
@@ -19,6 +18,10 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.FileSystemLoopException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -80,8 +83,18 @@ public class GaugeBuilder {
         return scene;
     }
     private void saveCurrentGauge(String filename){
-        //TODO do
-        throw new IllegalArgumentException("implement me");
+        try {
+            FileOutputStream fos = new FileOutputStream(filename);
+            ObjectOutputStream dos = new ObjectOutputStream(fos);
+
+            dos.writeObject(new TransientGauge(currentGauge));
+            System.out.println("file created: " + filename);
+            dos.flush();
+            fos.close();
+
+        } catch (Exception ef) {
+            ef.printStackTrace();
+        }
     }
     private VBox getTickMarkBox(){
         VBox tickBox = new VBox(10);
@@ -430,6 +443,7 @@ public class GaugeBuilder {
         currentGauge.setKnobType(knobType);
         currentGauge.setLedVisible(ledVisible);
         currentGauge.setLedType(ledType);
+        currentGauge.setLedColor(ledColour);
         currentGauge.setLedBlinking(ledBlinking);
         currentGauge.setMajorTickMarksVisible(majorTicksVisible);
         currentGauge.setMinorTickMarksVisible(minorTicksVisible);

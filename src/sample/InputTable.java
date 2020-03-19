@@ -40,4 +40,7 @@ public class InputTable {
         return this.max;
     }
     public String selectedValue() {return  options.getValue();}
+    public void addOption(String val){
+        options.getItems().add(val);
+    }
 }
