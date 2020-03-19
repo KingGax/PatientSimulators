@@ -250,18 +250,15 @@ public class Main extends Application {
         }catch(Exception e){
             minValue = 0;
         }
-        System.out.println("we;re in2");
         try {
-            System.out.println("we;re in3");
             FileInputStream fis = new FileInputStream(filename);
             ObjectInputStream dis = new ObjectInputStream(fis);
-            System.out.println("we;re in4");
             TransientGauge gauge = (TransientGauge) dis.readObject();
-            System.out.println("we;re in5");
             Gauge customisations = gauge.getGauge();
-            System.out.println("we;re in6");
+
+
+
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
-            System.out.println("we;re in5");
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
             return newGauge;
