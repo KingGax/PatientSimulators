@@ -126,6 +126,7 @@ public class Main extends Application {
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
+
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
@@ -142,58 +143,25 @@ public class Main extends Application {
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         dataType.setText("Gauge Type");
+        TableColumn<InputTable, TextField> redSection = new TableColumn<>();
+        redSection.setMinWidth(80);
+        redSection.setCellValueFactory(new PropertyValueFactory<>("red"));
+        redSection.setText("Red Section");
+        TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
+        amberSection.setMinWidth(80);
+        amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
+        amberSection.setText("Amber Section");
+        TableColumn<InputTable, TextField> greenSection = new TableColumn<>();
+        greenSection.setMinWidth(80);
+        greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
+        greenSection.setText("Green Section");
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
-        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
+        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,redSection,amberSection,greenSection);
         //borderPane.setCenter(new ColorPicker());
         stage.show();
     }
-    /*public void start(Stage s)
-    {
-        // set title for the stage
-        s.setTitle("creating color picker");
 
-        // create a tile pane
-        TilePane r = new TilePane();
-        BorderPane b = new BorderPane();
-        b.setCenter(r);
-        // create a label
-        Label l = new Label("This is a color picker example ");
-        Label l1 = new Label("no selected color ");
 
-        // create a color picker
-        ColorPicker cp = new ColorPicker();
-        ColorPicker cp2 = new ColorPicker();
-
-        // create a event handler
-        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e)
-            {
-                // color
-                Color c = cp.getValue();
-
-                // set text of the label to RGB value of color
-                l1.setText("Red = " + c.getRed() + ", Green = " + c.getGreen()
-                        + ", Blue = " + c.getBlue());
-            }
-        };
-
-        // set listener
-        cp.setOnAction(event);
-
-        // add label
-        r.getChildren().add(l);
-        r.getChildren().add(cp);
-        r.getChildren().add(cp2);
-        r.getChildren().add(l1);
-        b.setCenter(cp);
-        // create a scene
-        Scene sc = new Scene(b, 500, 200);
-
-        // set the scene
-        s.setScene(sc);
-
-        s.show();
-    }*/
     private void openEventLog()
     {
         String line;
@@ -261,7 +229,7 @@ public class Main extends Application {
         timerStarted = true;
     }
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
-        Gauge newGauge;
+        Gauge newGauge = null;
         int maxValue, minValue;
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
@@ -273,29 +241,55 @@ public class Main extends Application {
         }catch(Exception e){
             minValue = 0;
         }
+        int[] sections = parseSectionData(data);
+        Section redSection1 = new Section(sections[0],sections[1],Color.RED);
+        Section redSection2 = new Section(sections[4],sections[5],Color.RED);
+        Section amberSection1 = new Section(sections[1],sections[2],Color.valueOf("#FFBF00"));
+        Section amberSection2 = new Section(sections[3],sections[4],Color.valueOf("#FFBF00"));
+        Section greenSection = new Section(sections[2],sections[3],Color.GREEN);
+        GaugeBuilder builder = GaugeBuilder.create();
         if (type == Gauge.SkinType.SIMPLE_SECTION){
-            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
-            Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
+
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
-            newGauge.getSections().add(section);
-            return newGauge;
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.TILE_SPARK_LINE);
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
+        }
+        if (newGauge != null){
+            newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
             return newGauge;
         }
-        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.MODERN);
-        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
-        Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
-        newGauge.getSections().add(section);
+        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
+        newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
         return newGauge;
+    }
+    private int[] parseSectionData(InputTable data){
+        int[] results = new int[6];
+        parseOneSection(results,0,data.getRed().getText());
+        parseOneSection(results,1,data.getAmber().getText());
+        parseOneSection(results,2,data.getGreen().getText());
+        return results;
+    }
+    private void parseOneSection(int[]results, int index,String text ){
+        String[] textArray = text.split(",");
+        if (textArray.length == 2){
+            try {
+                results[index] = Integer.parseInt(textArray[0]);
+                results[results.length-1-index] = Integer.parseInt(textArray[1]);
+            } catch(Exception e) {
+                results[index] = 0;
+                results[results.length-1-index] = 0;
+            }
+        } else {
+            results[index] = 0;
+            results[results.length-1-index] = 0;
+        }
     }
     //Updates gauges at a regular interval, called by EventTimerTask.run()
     void updateGauges(){
@@ -334,10 +328,6 @@ public class Main extends Application {
 
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
-        //final float muStep = (float) updateFrequency/5000;
-        //float prevTime;
-        //prevTime = roundToDP((currentStep+mu-muStep)*5, (int) Math.ceil(Math.log(1/(double)muStep)));
-        //System.out.println("Prev: " + prevTime);
         while (eventLog.get(eventIndex).getTime() <= currentTime){
             eventBox.getItems().add(new eventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
             eventIndex++;
@@ -413,7 +403,10 @@ public class Main extends Application {
             min.textProperty().setValue("0");
             TextField max = new TextField();
             max.textProperty().setValue(Integer.toString(PureFunctions.getMaxValue(item)));
-            tv.getItems().add(new InputTable(item,typePicker,min,max));
+            TextField red = new TextField();
+            TextField amber = new TextField();
+            TextField green = new TextField();
+            tv.getItems().add(new InputTable(item,typePicker,min,max,red,amber,green));
         }
     }
 
