@@ -51,24 +51,30 @@ public class GaugeBuilder {
         borderPane.setCenter(gaugeBox);
         HBox footerBox = new HBox(5);
         Label filenameLabel = new Label("Filename:");
+        filenameLabel.getStyleClass().add("headings-gb");
         footerBox.setAlignment(Pos.CENTER);
         TextField gaugeNameTextbox = new TextField();
         Button saveGaugeButton = new Button("Save Gauge");
+        saveGaugeButton.getStyleClass().add("button-green-small");
         footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton);
         saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
         Button backButton = new Button("Back");
+        backButton.getStyleClass().add("button-blue-small");
         backButton.setOnAction(e->((javafx.stage.Stage)backButton.getScene().getWindow()).setScene(defaultScene));
         Label header = new Label("Build Gauges");
+        header.getStyleClass().add("headings-gb");
         HBox headerBox = new HBox();
         headerBox.minHeight(30);
         headerBox.setAlignment(Pos.CENTER);
         headerBox.getChildren().addAll(header,backButton);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
         currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("unit").title("Title").build();
-        currentGauge.setForegroundBaseColor(Color.BLACK);
+        currentGauge.setForegroundBaseColor(Color.WHITE);
         gaugeBox.getChildren().add(currentGauge);
+        gaugeBox.setAlignment(Pos.CENTER);
         currentGauge.setPrefSize(800,800);
         borderPane.setTop(headerBox);
+        borderPane.setId("background");
         borderPane.setBottom(footerBox);
         selectEditType.setOnAction(e->{switch (selectEditType.getValue()){
             case "Colours": editSection.setCenter(colourBox); break;
@@ -77,6 +83,7 @@ public class GaugeBuilder {
         } });
         Event.fireEvent(selectEditType,new ActionEvent());//triggers it to show colours by default
         Scene scene = new Scene(borderPane, 960, 800);
+        scene.getStylesheets().add("styling.css");
         return scene;
     }
     private void saveCurrentGauge(String filename){
@@ -90,6 +97,7 @@ public class GaugeBuilder {
         CheckBox tickLabelsVisibleCheckBox = new CheckBox();
         tickLabelsVisibleCheckBox.setSelected(true);
         Label tickLabelsVisibleLabel = new Label("Tick Labels Visible");
+        tickLabelsVisibleLabel.getStyleClass().add("headings-gb-label");
         tickLabelsVisibleHBox.getChildren().addAll(tickLabelsVisibleLabel,tickLabelsVisibleCheckBox);
         tickLabelsVisibleCheckBox.setOnAction(e->currentGauge.setTickLabelsVisible(tickLabelsVisibleCheckBox.isSelected()));
 
@@ -97,6 +105,7 @@ public class GaugeBuilder {
         CheckBox tickLabelsInsideCheckBox = new CheckBox();
         tickLabelsInsideCheckBox.setSelected(true);
         Label tickLabelsInsideLabel = new Label("Tick Labels Inside");
+        tickLabelsInsideLabel.getStyleClass().add("headings-gb-label");
         tickLabelsInsideHBox.getChildren().addAll(tickLabelsInsideLabel,tickLabelsInsideCheckBox);
         tickLabelsInsideCheckBox.setOnAction(e->currentGauge.setTickLabelLocation(tickLabelsInsideCheckBox.isSelected() ? TickLabelLocation.INSIDE : TickLabelLocation.OUTSIDE));
 
@@ -104,6 +113,7 @@ public class GaugeBuilder {
         CheckBox majorTicksVisibleCheckBox = new CheckBox();
         majorTicksVisibleCheckBox.setSelected(true);
         Label majorTicksVisibleLabel = new Label("Major Ticks Visible");
+        majorTicksVisibleLabel.getStyleClass().add("headings-gb-label");
         majorTicksVisibleHBox.getChildren().addAll(majorTicksVisibleLabel,majorTicksVisibleCheckBox);
         majorTicksVisibleCheckBox.setOnAction(e->currentGauge.setMajorTickMarksVisible(majorTicksVisibleCheckBox.isSelected()));
 
@@ -111,6 +121,7 @@ public class GaugeBuilder {
         CheckBox mediumTicksVisibleCheckBox = new CheckBox();
         mediumTicksVisibleCheckBox.setSelected(true);
         Label mediumTicksVisibleLabel = new Label("Medium Ticks Visible");
+        mediumTicksVisibleLabel.getStyleClass().add("headings-gb-label");
         mediumTicksVisibleHBox.getChildren().addAll(mediumTicksVisibleLabel,mediumTicksVisibleCheckBox);
         mediumTicksVisibleCheckBox.setOnAction(e->currentGauge.setMediumTickMarksVisible(mediumTicksVisibleCheckBox.isSelected()));
 
@@ -118,6 +129,7 @@ public class GaugeBuilder {
         CheckBox minorTicksVisibleCheckBox = new CheckBox();
         minorTicksVisibleCheckBox.setSelected(true);
         Label minorTicksVisibleLabel = new Label("Minor Ticks Visible");
+        minorTicksVisibleLabel.getStyleClass().add("headings-gb-label");
         minorTicksVisibleHBox.getChildren().addAll(minorTicksVisibleLabel,minorTicksVisibleCheckBox);
         minorTicksVisibleCheckBox.setOnAction(e->currentGauge.setMinorTickMarksVisible(minorTicksVisibleCheckBox.isSelected()));
 
@@ -125,6 +137,7 @@ public class GaugeBuilder {
         ColorPicker tickColorPicker = new ColorPicker();
         tickColorPicker.setValue(Color.BLACK);
         Label tickColorLabel = new Label("Medium Tick Colour");
+        tickColorLabel.getStyleClass().add("headings-gb-label");
         tickColorVBox.getChildren().addAll(tickColorLabel,tickColorPicker);
         tickColorPicker.setOnAction(e->currentGauge.setMediumTickMarkColor(tickColorPicker.getValue()));
 
@@ -132,6 +145,7 @@ public class GaugeBuilder {
         ColorPicker majorTickColorPicker = new ColorPicker();
         majorTickColorPicker.setValue(Color.BLACK);
         Label majorTickColorLabel = new Label("Major Tick Colour");
+        majorTickColorLabel.getStyleClass().add("headings-gb-label");
         majorTickColorVBox.getChildren().addAll(majorTickColorLabel,majorTickColorPicker);
         majorTickColorPicker.setOnAction(e->currentGauge.setMajorTickMarkColor(majorTickColorPicker.getValue()));
 
@@ -139,6 +153,7 @@ public class GaugeBuilder {
         ColorPicker minorTickColorPicker = new ColorPicker();
         minorTickColorPicker.setValue(Color.BLACK);
         Label minorTickColorLabel = new Label("Minor Tick Colour");
+        minorTickColorLabel.getStyleClass().add("headings-gb-label");
         minorTickColorVBox.getChildren().addAll(minorTickColorLabel,minorTickColorPicker);
         minorTickColorPicker.setOnAction(e->currentGauge.setMinorTickMarkColor(minorTickColorPicker.getValue()));
 
@@ -146,6 +161,7 @@ public class GaugeBuilder {
         ComboBox<String> majorTickShapeComboBox = new ComboBox<>();
         majorTickShapeComboBox.getItems().addAll("Line","Dot","Trapezoid","Triangle","Box","Tick Label","Pill");
         Label majorTickShapeLabel = new Label("Major Tick Shape");
+        majorTickShapeLabel.getStyleClass().add("headings-gb-label");
         majorTickShapeVBox.getChildren().addAll(majorTickShapeLabel,majorTickShapeComboBox);
         majorTickShapeComboBox.setOnAction(e->currentGauge.setMajorTickMarkType(PureFunctions.translateStringToTickMarkType(majorTickShapeComboBox.getValue())));
 
@@ -153,6 +169,7 @@ public class GaugeBuilder {
         ComboBox<String> mediumTickShapeComboBox = new ComboBox<>();
         mediumTickShapeComboBox.getItems().addAll("Line","Dot","Trapezoid","Triangle","Box","Tick Label","Pill");
         Label mediumTickShapeLabel = new Label("Medium Tick Shape");
+        mediumTickShapeLabel.getStyleClass().add("headings-gb-label");
         mediumTickShapeVBox.getChildren().addAll(mediumTickShapeLabel,mediumTickShapeComboBox);
         mediumTickShapeComboBox.setOnAction(e->currentGauge.setMediumTickMarkType(PureFunctions.translateStringToTickMarkType(mediumTickShapeComboBox.getValue())));
 
@@ -160,12 +177,14 @@ public class GaugeBuilder {
         ComboBox<String> minorTickShapeComboBox = new ComboBox<>();
         minorTickShapeComboBox.getItems().addAll("Line","Dot","Trapezoid","Triangle","Box","Tick Label","Pill");
         Label minorTickShapeLabel = new Label("Minor Tick Shape");
+        minorTickShapeLabel.getStyleClass().add("headings-gb-label");
         minorTickShapeVBox.getChildren().addAll(minorTickShapeLabel,minorTickShapeComboBox);
         minorTickShapeComboBox.setOnAction(e->currentGauge.setMinorTickMarkType(PureFunctions.translateStringToTickMarkType(minorTickShapeComboBox.getValue())));
 
         AtomicReference<String> oldMajorWidth = new AtomicReference<>("");
         VBox majorTickWidthVBox = new VBox(0);
         Label majorTickWidthLabel = new Label("Major Width Factor (0-1)");
+        majorTickWidthLabel.getStyleClass().add("headings-gb-label");
         TextField majorTickWidthText = new TextField();
         majorTickWidthText.setOnMouseClicked(e -> oldMajorWidth.set(majorTickWidthText.getText()));
         majorTickWidthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(majorTickWidthText,oldVal, oldMajorWidth.get())){currentGauge.setMajorTickMarkWidthFactor(Double.parseDouble(majorTickWidthText.getText()));}});
@@ -175,6 +194,7 @@ public class GaugeBuilder {
         AtomicReference<String> oldMinorWidth = new AtomicReference<>("");
         VBox minorTickWidthVBox = new VBox(0);
         Label minorTickWidthLabel = new Label("Minor Width Factor (0-1)");
+        minorTickWidthLabel.getStyleClass().add("headings-gb-label");
         TextField minorTickWidthText = new TextField();
         minorTickWidthText.setOnMouseClicked(e -> oldMinorWidth.set(minorTickWidthText.getText()));
         minorTickWidthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(minorTickWidthText,oldVal, oldMinorWidth.get())){currentGauge.setMinorTickMarkWidthFactor(Double.parseDouble(minorTickWidthText.getText()));}});
@@ -184,6 +204,7 @@ public class GaugeBuilder {
         AtomicReference<String> oldMajorLength = new AtomicReference<>("");
         VBox majorTickLengthVBox = new VBox(0);
         Label majorTickLengthLabel = new Label("Major Length Factor (0-1)");
+        majorTickLengthLabel.getStyleClass().add("headings-gb-label");
         TextField majorTickLengthText = new TextField();
         majorTickLengthText.setOnMouseClicked(e -> oldMajorLength.set(majorTickLengthText.getText()));
         majorTickLengthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(majorTickLengthText,oldVal, oldMajorLength.get())){currentGauge.setMajorTickMarkLengthFactor(Double.parseDouble(majorTickLengthText.getText()));}});
@@ -193,6 +214,7 @@ public class GaugeBuilder {
         AtomicReference<String> oldMediumLength = new AtomicReference<>("");
         VBox mediumTickLengthVBox = new VBox(0);
         Label mediumTickLengthLabel = new Label("Medium Length Factor (0-1)");
+        mediumTickLengthLabel.getStyleClass().add("headings-gb-label");
         TextField mediumTickLengthText = new TextField();
         mediumTickLengthText.setOnMouseClicked(e -> oldMediumLength.set(mediumTickLengthText.getText()));
         mediumTickLengthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(mediumTickLengthText,oldVal, oldMediumLength.get())){currentGauge.setMediumTickMarkLengthFactor(Double.parseDouble(mediumTickLengthText.getText()));}});
@@ -202,6 +224,7 @@ public class GaugeBuilder {
         AtomicReference<String> oldMinorLength = new AtomicReference<>("");
         VBox minorTickLengthVBox = new VBox(0);
         Label minorTickLengthLabel = new Label("Minor Length Factor (0-1)");
+        minorTickLengthLabel.getStyleClass().add("headings-gb-label");
         TextField minorTickLengthText = new TextField();
         minorTickLengthText.setOnMouseClicked(e -> oldMinorLength.set(minorTickLengthText.getText()));
         minorTickLengthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(minorTickLengthText,oldVal, oldMinorLength.get())){currentGauge.setMinorTickMarkLengthFactor(Double.parseDouble(minorTickLengthText.getText()));}});
@@ -211,6 +234,7 @@ public class GaugeBuilder {
         AtomicReference<String> oldMediumWidth = new AtomicReference<>("");
         VBox mediumTickWidthVBox = new VBox(0);
         Label mediumTickWidthLabel = new Label("Medium Width Factor (0-1)");
+        mediumTickWidthLabel.getStyleClass().add("headings-gb-label");
         TextField mediumTickWidthText = new TextField();
         mediumTickWidthText.setOnMouseClicked(e -> oldMediumWidth.set(mediumTickWidthText.getText()));
         mediumTickWidthText.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateTickFactor(mediumTickWidthText,oldVal, oldMediumWidth.get())){currentGauge.setMediumTickMarkWidthFactor(Double.parseDouble(mediumTickWidthText.getText()));}});
@@ -228,6 +252,7 @@ public class GaugeBuilder {
         ComboBox<String> needleTypeComboBox = new ComboBox<>();
         needleTypeComboBox.getItems().addAll("Standard","Big","Fat","Scientific","Avionic","Variometer");
         Label needleTypeLabel = new Label("Needle Type");
+        needleTypeLabel.getStyleClass().add("headings-gb-label");
         needleTypeVBox.getChildren().addAll(needleTypeLabel,needleTypeComboBox);
         needleTypeComboBox.setOnAction(e->currentGauge.setNeedleType(PureFunctions.translateStringToNeedleType(needleTypeComboBox.getValue())));
 
@@ -235,6 +260,7 @@ public class GaugeBuilder {
         ComboBox<String> needleShapeComboBox = new ComboBox<>();
         needleShapeComboBox.getItems().addAll("Flat","Angled","Round");
         Label needleShapeLabel = new Label("Needle Shape");
+        needleShapeLabel.getStyleClass().add("headings-gb-label");
         needleShapeVBox.getChildren().addAll(needleShapeLabel,needleShapeComboBox);
         needleShapeComboBox.setOnAction(e->currentGauge.setNeedleShape(PureFunctions.translateStringToNeedleShape(needleShapeComboBox.getValue())));
 
@@ -242,24 +268,28 @@ public class GaugeBuilder {
         ComboBox<String> knobTypeComboBox = new ComboBox<>();
         knobTypeComboBox.getItems().addAll("Standard","Flat","Metal","Plain");
         Label knobTypeLabel = new Label("Knob Type");
+        knobTypeLabel.getStyleClass().add("headings-gb-label");
         knobTypeVBox.getChildren().addAll(knobTypeLabel,knobTypeComboBox);
         knobTypeComboBox.setOnAction(e->currentGauge.setKnobType(PureFunctions.translateStringToknobType(knobTypeComboBox.getValue())));
 
         HBox ledVisibleHBox = new HBox(5);
         CheckBox ledVisibleCheckBox = new CheckBox();
         Label ledVisibleLabel = new Label("LED Visible");
+        ledVisibleLabel.getStyleClass().add("headings-gb-label");
         ledVisibleHBox.getChildren().addAll(ledVisibleLabel,ledVisibleCheckBox);
         ledVisibleCheckBox.setOnAction(e->currentGauge.setLedVisible(ledVisibleCheckBox.isSelected()));
 
         HBox ledBlinkingHBox = new HBox(5);
         CheckBox ledBlinkingCheckBox = new CheckBox();
         Label ledBlinkingLabel = new Label("LED Blinking");
+        ledBlinkingLabel.getStyleClass().add("headings-gb-label");
         ledBlinkingHBox.getChildren().addAll(ledBlinkingLabel,ledBlinkingCheckBox);
         ledBlinkingCheckBox.setOnAction(e->currentGauge.setLedBlinking(ledBlinkingCheckBox.isSelected()));
 
         HBox ledFlatHBox = new HBox(5);
         CheckBox ledFlatCheckBox = new CheckBox();
         Label ledFlatLabel = new Label("LED Flat");
+        ledFlatLabel.getStyleClass().add("headings-gb-label");
         ledFlatHBox.getChildren().addAll(ledFlatLabel,ledFlatCheckBox);
         ledFlatCheckBox.setOnAction(e->currentGauge.setLedType(ledFlatCheckBox.isSelected() ? Gauge.LedType.FLAT : Gauge.LedType.STANDARD));
 
@@ -267,6 +297,7 @@ public class GaugeBuilder {
         ColorPicker ledColorPicker = new ColorPicker();
         ledColorPicker.setValue(Color.RED);
         Label ledColorLabel = new Label("LED Colour");
+        ledColorLabel.getStyleClass().add("headings-gb-label");
         ledColorVBox.getChildren().addAll(ledColorLabel,ledColorPicker);
         ledColorPicker.setOnAction(e->currentGauge.setLedColor(ledColorPicker.getValue()));
 
@@ -296,6 +327,7 @@ public class GaugeBuilder {
         ColorPicker needleColourPicker = new ColorPicker();
         needleColourPicker.setValue(Color.BLACK);
         Label needleColourLabel = new Label("Needle Colour");
+        needleColourLabel.getStyleClass().add("headings-gb-label");
         needleColourVBox.getChildren().addAll(needleColourLabel,needleColourPicker);
         needleColourPicker.setOnAction(e->currentGauge.setNeedleColor(needleColourPicker.getValue()));
 
@@ -303,6 +335,7 @@ public class GaugeBuilder {
         ColorPicker backgroundPaintColorPicker = new ColorPicker();
         backgroundPaintColorPicker.setValue(Color.BLACK);
         Label backgroundPaintLabel = new Label("Backdrop Colour");
+        backgroundPaintLabel.getStyleClass().add("headings-gb-label");
         backgroundPaintVBox.getChildren().addAll(backgroundPaintLabel,backgroundPaintColorPicker);
         backgroundPaintColorPicker.setOnAction(e->currentGauge.setBackgroundPaint(backgroundPaintColorPicker.getValue()));
 
@@ -310,6 +343,7 @@ public class GaugeBuilder {
         ColorPicker titlePaintColorPicker = new ColorPicker();
         titlePaintColorPicker.setValue(Color.BLACK);
         Label titleLabel = new Label("Title Colour");
+        titleLabel.getStyleClass().add("headings-gb-label");
         titleColourBox.getChildren().addAll(titleLabel,titlePaintColorPicker);
         titlePaintColorPicker.setOnAction(e->currentGauge.setTitleColor(titlePaintColorPicker.getValue()));
 
@@ -317,6 +351,7 @@ public class GaugeBuilder {
         ColorPicker unitColorPicker = new ColorPicker();
         unitColorPicker.setValue(Color.BLACK);
         Label unitLabel = new Label("Unit Colour");
+        unitLabel.getStyleClass().add("headings-gb-label");
         unitColourBox.getChildren().addAll(unitLabel,unitColorPicker);
         unitColorPicker.setOnAction(e->currentGauge.setUnitColor(unitColorPicker.getValue()));
 
@@ -324,6 +359,7 @@ public class GaugeBuilder {
         ColorPicker knobColorPicker = new ColorPicker();
         knobColorPicker.setValue(Color.BLACK);
         Label knobColorLabel = new Label("Knob Colour");
+        knobColorLabel.getStyleClass().add("headings-gb-label");
         knobColorVBox.getChildren().addAll(knobColorLabel,knobColorPicker);
         knobColorPicker.setOnAction(e->currentGauge.setKnobColor(knobColorPicker.getValue()));
 
@@ -331,6 +367,7 @@ public class GaugeBuilder {
         ColorPicker valueColorPicker = new ColorPicker();
         valueColorPicker.setValue(Color.BLACK);
         Label valueColorLabel = new Label("Value Colour");
+        valueColorLabel.getStyleClass().add("headings-gb-label");
         valueColorVBox.getChildren().addAll(valueColorLabel,valueColorPicker);
         valueColorPicker.setOnAction(e->currentGauge.setValueColor(valueColorPicker.getValue()));
 
@@ -338,6 +375,7 @@ public class GaugeBuilder {
         ColorPicker tickLabelColorPicker = new ColorPicker();
         tickLabelColorPicker.setValue(Color.BLACK);
         Label tickLabelColorLabel = new Label("Tick Label Colour");
+        tickLabelColorLabel.getStyleClass().add("headings-gb-label");
         tickLabelColorVBox.getChildren().addAll(tickLabelColorLabel,tickLabelColorPicker);
         tickLabelColorPicker.setOnAction(e->currentGauge.setTickLabelColor(tickLabelColorPicker.getValue()));
 
@@ -345,6 +383,7 @@ public class GaugeBuilder {
         ColorPicker modernTickColorPicker = new ColorPicker();
         modernTickColorPicker.setValue(Color.BLACK);
         Label modernTickColorLabel = new Label("Modern Skin Tick Colour");
+        modernTickColorLabel.getStyleClass().add("headings-gb-label");
         modernTickColourVBox.getChildren().addAll(modernTickColorLabel,modernTickColorPicker);
         modernTickColorPicker.setOnAction(e->currentGauge.setTickMarkColor(modernTickColorPicker.getValue()));
 
@@ -353,7 +392,9 @@ public class GaugeBuilder {
         ColorPicker borderColorPicker = new ColorPicker();
         borderColorPicker.setValue(Color.BLACK);
         Label borderColorLabel = new Label("Border Colour");
+        borderColorLabel.getStyleClass().add("headings-gb-label");
         Label borderWidthLabel = new Label("Border Width");
+        borderWidthLabel.getStyleClass().add("headings-gb-label");
         borderWidthLabel.setPadding(new Insets(5,0,0,0));
         TextField borderWidthText = new TextField();
         borderWidthText.setOnMouseClicked(e -> oldTextValue.set(borderWidthText.getText()));
