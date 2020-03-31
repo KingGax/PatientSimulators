@@ -23,6 +23,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,6 +32,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -68,11 +71,13 @@ public class Main extends Application {
     private TableView eventBox;
     private Label timeLabel;
     private int eventIndex = 0;
+    private Stage mainStage;
 
     @Override
 
     //Initial scene setup
     public void start(Stage stage) {
+        mainStage = stage;
         dataReader = null;
         eventReader = null;
         popup = new Popup();
@@ -118,8 +123,6 @@ public class Main extends Application {
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
         BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
-        //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
-        //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
@@ -157,7 +160,6 @@ public class Main extends Application {
         greenSection.setText("Green Section");
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,redSection,amberSection,greenSection);
-        //borderPane.setCenter(new ColorPicker());
         stage.show();
     }
 
@@ -192,19 +194,19 @@ public class Main extends Application {
         }
         else
         {
-            showPopup("Choose at least one header to display",stage);
+            showPopup("Choose at least one header to display");
         }
     }
 
     //Displays popup with given message
-    private void showPopup(String message, Stage stage) {
+    private void showPopup(String message) {
         Label popupLabel = new Label(message);
         popupLabel.setStyle(" -fx-background-color: orangered;");// set background
         popupLabel.setMinWidth(80); // set size of label
         popupLabel.setMinHeight(50);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(stage, stage.getScene().getWindow().getX() + 5, stage.getScene().getWindow().getY() + 20);
+        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 20);
 
     }
 
@@ -399,15 +401,62 @@ public class Main extends Application {
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
             typePicker.getSelectionModel().selectFirst();
-            TextField min = new TextField();
-            min.textProperty().setValue("0");
-            TextField max = new TextField();
-            max.textProperty().setValue(Integer.toString(PureFunctions.getMaxValue(item)));
-            TextField red = new TextField();
-            TextField amber = new TextField();
-            TextField green = new TextField();
+            TextField min = newValidatingDoubleTextField("0");
+            TextField max = newValidatingDoubleTextField(Integer.toString(PureFunctions.getMaxValue(item)));
+            TextField red = newValidatingRangeTextField("");
+            TextField amber = newValidatingRangeTextField("");
+            TextField green = newValidatingRangeTextField("");
             tv.getItems().add(new InputTable(item,typePicker,min,max,red,amber,green));
         }
+    }
+    private TextField newValidatingRangeTextField(String initialValue){
+        AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
+        TextField tf = new TextField();
+        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateRange(tf,oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
+        tf.textProperty().setValue(initialValue);
+        return tf;
+    }
+    private boolean validateRange(TextField textBox,Boolean oldVal){
+        if (oldVal){
+            if (textBox.getText().compareTo("") == 0){
+                return true;
+            }
+            String[] textArray = textBox.getText().split(",");
+            if (textArray.length == 2){
+                try {
+                    int first = Integer.parseInt(textArray[0]);
+                    int second = Integer.parseInt(textArray[1]);
+                    if(first<=second){
+                        return true;
+                    } else {
+                        showPopup("First value of a range must be smaller than the second");
+                        return false;
+                    }
+                } catch(Exception e) {
+
+                }
+            }
+            showPopup("Range should be \"Integer,Integer\"");
+        }
+        return false;
+    }
+    private TextField newValidatingDoubleTextField(String initialValue){
+        AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
+        TextField tf = new TextField();
+        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateDouble(tf,oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
+        tf.textProperty().setValue(initialValue);
+        return tf;
+    }
+    private boolean validateDouble(TextField textBox, boolean oldVal){
+        if (oldVal){
+            try {
+                double newV = Double.parseDouble(textBox.getText());
+                return true;
+            } catch (NumberFormatException e) {
+                showPopup("Error inputting decimal number");
+            }
+        }
+        return false;
     }
 
     public class eventData {
@@ -623,7 +672,7 @@ public class Main extends Application {
         else if (file != null){
             if (getFileExtension(file.getPath()).compareTo("csv")!=0)
             {
-                showPopup("Please choose a CSV file",stage);
+                showPopup("Please choose a CSV file");
             }
         }
     }
