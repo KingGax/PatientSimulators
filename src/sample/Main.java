@@ -266,7 +266,7 @@ public class Main extends Application {
 
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setBarBackgroundColor(Color.WHITE); //rgb(39,44,50)
             newGauge.setAnimated(true);
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
@@ -454,10 +454,13 @@ public class Main extends Application {
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
+        midHBox.getStylesheets().add("sample/stylesheet/styling.css");
         TableColumn<String, eventData> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+        timeCol.getStyleClass().add("table-heads");
         TableColumn<String, eventData> eventCol = new TableColumn<>("Event");
         eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
+        eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
         Button playbackButton = new Button();
@@ -493,9 +496,10 @@ public class Main extends Application {
         });
         topVBox.getChildren().addAll(timeSlider, timeLabel);
         topHBox.getChildren().addAll(playbackButton, topVBox);
+        topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         bp.setTop(topHBox);
         initialiseGauges(selectedHeaderTitles, gp);
-        return new Scene(bp, 640, 480);
+        return new Scene(bp, 960, 800);
     }
 
     //Handles stopping and starting of playback
