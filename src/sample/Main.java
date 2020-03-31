@@ -3,7 +3,6 @@ package sample;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
-import eu.hansolo.medusa.skins.GaugeSkin;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -25,21 +24,14 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 //TODO:
@@ -85,7 +77,7 @@ public class Main extends Application {
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         title.getStyleClass().add("title");
-        title.setPadding(new Insets(50, 20, 0, 20));
+        title.setPadding(new Insets(10, 20, 0, 20));
         title.setFont(Font.font("fantasy"));
         Label selectFileLabel = new Label("Please select either a Data File or an Event Log:");
         selectFileLabel.getStyleClass().add("select-file-label");
@@ -102,7 +94,7 @@ public class Main extends Application {
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
-        Button gaugeButton = new Button("Custom Gauges");
+        Button gaugeButton = new Button("Build a Custom Gauge");
         gaugeButton.getStyleClass().add("button-yellow");
         sample.GaugeBuilder gb = new sample.GaugeBuilder();
         selectedHeaders.addColumn(0,selectedHeaderTitles);
@@ -122,7 +114,7 @@ public class Main extends Application {
         VBox centreBox = new VBox(30);
         chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
         selectedHeaderTitles.prefWidthProperty().bind(chooseHeadersBox.widthProperty());
-        centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,simulationButton,gaugeButton);
+        centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,gaugeButton,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
         header.getChildren().addAll(title);
@@ -130,11 +122,11 @@ public class Main extends Application {
         header.setMinHeight(30);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
-        BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
+        BorderPane.setMargin(centreBox,new Insets(0,10,10,10));
         //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
         //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
-        welcome.getStylesheets().add("styling.css");
+        welcome.getStylesheets().add("sample/stylesheet/styling.css");
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
@@ -221,7 +213,7 @@ public class Main extends Application {
     //Displays popup with given message
     private void showPopup(String message, Stage stage) {
         Label popupLabel = new Label(message);
-        popupLabel.setStyle(" -fx-background-color: orangered;");// set background
+        popupLabel.setStyle(" -fx-background-color: red;");// set background
         popupLabel.setMinWidth(80); // set size of label
         popupLabel.setMinHeight(50);
         popup.getContent().clear();

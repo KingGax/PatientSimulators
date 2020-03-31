@@ -2,7 +2,6 @@ package sample;
 
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.TickLabelLocation;
-import eu.hansolo.medusa.TickLabelOrientation;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Insets;
@@ -42,31 +41,35 @@ public class GaugeBuilder {
         VBox otherBox = getOtherBox();
         VBox gaugeBox = new VBox(15);
         VBox selectBox = new VBox(0);new VBox(20);
-        selectBox.setPadding(new Insets(0,0,10,0));
         Label selectEditTypeLabel = new Label("Edit type:");
-        selectEditTypeLabel.setPadding(new Insets(10,0,0,0));
-        selectBox.getChildren().addAll(selectGaugeType,selectEditTypeLabel,selectEditType);
+        selectEditTypeLabel.getStyleClass().add("headings-gb-label");
+        Label gaugePickerTitle = new Label("Options");
+        gaugePickerTitle.getStyleClass().add("headings-options");
+        selectBox.getChildren().addAll(gaugePickerTitle, selectGaugeType,selectEditTypeLabel,selectEditType);
         editSection.setTop(selectBox);
         borderPane.setLeft(editSection);
+        borderPane.setPadding(new Insets(0, 20, 0 ,20));
         borderPane.setCenter(gaugeBox);
         HBox footerBox = new HBox(5);
         Label filenameLabel = new Label("Filename:");
         filenameLabel.getStyleClass().add("headings-gb");
         footerBox.setAlignment(Pos.CENTER);
+        footerBox.setPadding(new Insets(0, 0, 20, 0));
         TextField gaugeNameTextbox = new TextField();
         Button saveGaugeButton = new Button("Save Gauge");
         saveGaugeButton.getStyleClass().add("button-green-small");
-        footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton);
-        saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
         Button backButton = new Button("Back");
         backButton.getStyleClass().add("button-blue-small");
         backButton.setOnAction(e->((javafx.stage.Stage)backButton.getScene().getWindow()).setScene(defaultScene));
+        footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton, backButton);
+        saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
         Label header = new Label("Build Gauges");
-        header.getStyleClass().add("headings-gb");
+        header.getStyleClass().add("title-gb");
         HBox headerBox = new HBox();
         headerBox.minHeight(30);
+        headerBox.setPadding(new Insets(20, 0, 0, 0));
+        headerBox.getChildren().addAll(header);
         headerBox.setAlignment(Pos.CENTER);
-        headerBox.getChildren().addAll(header,backButton);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
         currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("unit").title("Title").build();
         currentGauge.setForegroundBaseColor(Color.WHITE);
@@ -83,7 +86,7 @@ public class GaugeBuilder {
         } });
         Event.fireEvent(selectEditType,new ActionEvent());//triggers it to show colours by default
         Scene scene = new Scene(borderPane, 960, 800);
-        scene.getStylesheets().add("styling.css");
+        scene.getStylesheets().add("sample/stylesheet/styling.css");
         return scene;
     }
     private void saveCurrentGauge(String filename){
