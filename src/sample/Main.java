@@ -213,12 +213,13 @@ public class Main extends Application {
     //Displays popup with given message
     private void showPopup(String message, Stage stage) {
         Label popupLabel = new Label(message);
-        popupLabel.setStyle(" -fx-background-color: red;");// set background
-        popupLabel.setMinWidth(80); // set size of label
+        popupLabel.getStyleClass().add("pop-up-message");
+        popupLabel.setMinWidth(960); // set size of label
         popupLabel.setMinHeight(50);
+        popupLabel.setAlignment(Pos.CENTER);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(stage, stage.getScene().getWindow().getX() + 5, stage.getScene().getWindow().getY() + 20);
+        popup.show(stage, stage.getScene().getWindow().getX(), stage.getScene().getWindow().getY() + 30);
 
     }
 
@@ -233,10 +234,11 @@ public class Main extends Application {
             pane.add(gaugeBox, i%2, i /2);
             gauges.add(gauge);
         }
+        pane.setPrefSize(570, 400);
         pane.setPadding(new Insets(20));
         pane.setHgap(15);
         pane.setVgap(15);
-        pane.setBackground(new Background(new BackgroundFill(Color.rgb(39,44,50), CornerRadii.EMPTY, Insets.EMPTY)));
+        pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
         TimerTask task = new EventTimerTask(this);
         eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
@@ -266,7 +268,7 @@ public class Main extends Application {
 
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.WHITE); //rgb(39,44,50)
+            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
@@ -337,7 +339,7 @@ public class Main extends Application {
 
     //Updates time label in FX thread
     private void updateTimeLabel(){
-        Platform.runLater(() -> timeLabel.setText((currentStep + mu) * 5 +"s"));
+        Platform.runLater(() -> timeLabel.setText("Time Elapsed: " + (currentStep + mu) * 5 +"s"));
     }
 
     private void updateEventBox(){
@@ -463,6 +465,10 @@ public class Main extends Application {
         eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
+        timeCol.prefWidthProperty().bind(eventBox.widthProperty().multiply(0.2));
+        eventCol.prefWidthProperty().bind(eventBox.widthProperty().multiply(0.8));
+        timeCol.setResizable(false);
+        eventCol.setResizable(false);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);
@@ -494,9 +500,12 @@ public class Main extends Application {
             updateEventBox();
             updateTimeLabel();
         });
+        timeSlider.setPadding(new Insets(15, 0, 0, 0));
+        timeLabel.setStyle("-fx-text-fill: white");
         topVBox.getChildren().addAll(timeSlider, timeLabel);
         topHBox.getChildren().addAll(playbackButton, topVBox);
         topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+        topHBox.setStyle("-fx-border-color: white; -fx-border-radius: 5;");
         bp.setTop(topHBox);
         initialiseGauges(selectedHeaderTitles, gp);
         return new Scene(bp, 960, 800);
