@@ -109,10 +109,13 @@ public class Main extends Application {
         HBox fileSelectionBox = new HBox(15);
         fileSelectionBox.setAlignment(Pos.CENTER);
         fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter);
-        HBox chooseHeadersBox = new HBox(20);
+        HBox chooseHeadersBox = new HBox(10);
+        VBox inputHeadersBox = new VBox(20);
+        inputHeadersBox.setPadding(new Insets(120, 0, 0, 0));
+        inputHeadersBox.getChildren().addAll(headerPicker, addHeader);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
-        chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
+        chooseHeadersBox.getChildren().addAll(inputHeadersBox, selectedHeaders);
         selectedHeaderTitles.prefWidthProperty().bind(chooseHeadersBox.widthProperty());
         centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,gaugeButton,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
@@ -140,15 +143,15 @@ public class Main extends Application {
         headerName.getStyleClass().add("table-heads");
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
-        dataType.setMinWidth(150);
+        dataType.setMinWidth(110);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
         TableColumn<InputTable, TextField> minVal = new TableColumn<>();
-        minVal.setMinWidth(80);
+        minVal.setMinWidth(50);
         minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
         minVal.setText("Min");
         minVal.getStyleClass().add("table-heads");
         TableColumn<InputTable, TextField> maxVal = new TableColumn<>();
-        maxVal.setMinWidth(80);
+        maxVal.setMinWidth(50);
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         maxVal.getStyleClass().add("table-heads");
@@ -268,13 +271,16 @@ public class Main extends Application {
 
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setValueColor(Color.WHITE);
+            newGauge.setTitleColor(Color.WHITE);
+            newGauge.setUnitColor(Color.WHITE);
+            newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
         }
         if (newGauge != null){
@@ -282,6 +288,11 @@ public class Main extends Application {
             return newGauge;
         }
         newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
+        newGauge.setValueColor(Color.WHITE);
+        newGauge.setTitleColor(Color.WHITE);
+        newGauge.setUnitColor(Color.WHITE);
+        newGauge.setForegroundBaseColor((Color.WHITE));
+        newGauge.setBarBackgroundColor(Color.WHITE);
         newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
         return newGauge;
     }
@@ -465,10 +476,8 @@ public class Main extends Application {
         eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
-        timeCol.prefWidthProperty().bind(eventBox.widthProperty().multiply(0.2));
-        eventCol.prefWidthProperty().bind(eventBox.widthProperty().multiply(0.8));
-        timeCol.setResizable(false);
-        eventCol.setResizable(false);
+        timeCol.setMinWidth(80);
+        eventCol.setMinWidth(300);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);
