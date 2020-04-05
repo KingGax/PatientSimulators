@@ -232,7 +232,7 @@ public class Main extends Application {
     }
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
         Gauge newGauge = null;
-        int maxValue, minValue;
+        double maxValue, minValue;
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
         }catch(Exception e){
@@ -243,7 +243,7 @@ public class Main extends Application {
         }catch(Exception e){
             minValue = 0;
         }
-        int[] sections = parseSectionData(data);
+        double[] sections = parseSectionData(data);
         Section redSection1 = new Section(sections[0],sections[1],Color.RED);
         Section redSection2 = new Section(sections[4],sections[5],Color.RED);
         Section amberSection1 = new Section(sections[1],sections[2],Color.valueOf("#FFBF00"));
@@ -267,23 +267,23 @@ public class Main extends Application {
             newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
             return newGauge;
         }
-        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
+        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.MODERN).build();
         newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
         return newGauge;
     }
-    private int[] parseSectionData(InputTable data){
-        int[] results = new int[6];
+    private double[] parseSectionData(InputTable data){
+        double[] results = new double[6];
         parseOneSection(results,0,data.getRed().getText());
         parseOneSection(results,1,data.getAmber().getText());
         parseOneSection(results,2,data.getGreen().getText());
         return results;
     }
-    private void parseOneSection(int[]results, int index,String text ){
+    private void parseOneSection(double[]results, int index,String text ){
         String[] textArray = text.split(",");
         if (textArray.length == 2){
             try {
-                results[index] = Integer.parseInt(textArray[0]);
-                results[results.length-1-index] = Integer.parseInt(textArray[1]);
+                results[index] = Double.parseDouble(textArray[0]);
+                results[results.length-1-index] = Double.parseDouble(textArray[1]);
             } catch(Exception e) {
                 results[index] = 0;
                 results[results.length-1-index] = 0;
@@ -401,11 +401,11 @@ public class Main extends Application {
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
             typePicker.getSelectionModel().selectFirst();
-            TextField min = newValidatingDoubleTextField("0");
-            TextField max = newValidatingDoubleTextField(Integer.toString(PureFunctions.getMaxValue(item)));
-            TextField red = newValidatingRangeTextField("");
-            TextField amber = newValidatingRangeTextField("");
-            TextField green = newValidatingRangeTextField("");
+            TextField min = newValidatingDoubleTextField(Double.toString(PureFunctions.getMinValue(item)));
+            TextField max = newValidatingDoubleTextField(Double.toString(PureFunctions.getMaxValue(item)));
+            TextField red = newValidatingRangeTextField(PureFunctions.getRedRange(item));
+            TextField amber = newValidatingRangeTextField(PureFunctions.getAmberRange(item));
+            TextField green = newValidatingRangeTextField(PureFunctions.getGreenRange(item));
             tv.getItems().add(new InputTable(item,typePicker,min,max,red,amber,green));
         }
     }
@@ -424,8 +424,8 @@ public class Main extends Application {
             String[] textArray = textBox.getText().split(",");
             if (textArray.length == 2){
                 try {
-                    int first = Integer.parseInt(textArray[0]);
-                    int second = Integer.parseInt(textArray[1]);
+                    double first = Double.parseDouble(textArray[0]);
+                    double second = Double.parseDouble(textArray[1]);
                     if(first<=second){
                         return true;
                     } else {
@@ -436,7 +436,7 @@ public class Main extends Application {
 
                 }
             }
-            showPopup("Range should be \"Integer,Integer\"");
+            showPopup("Range should be \"Decimal,Decimal\"");
         }
         return false;
     }
