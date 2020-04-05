@@ -33,42 +33,217 @@ class PureFunctions {
     //Returns number of decimal places needed to display a given heading
     static int getDecimals(String val) {
         switch (val) {
-            case "HR":
-                return 0;
-            case "SBP":
-                return 0;
-            case "DBP":
-                return 0;
+            case "TBlood":
+            case "TBody":
+            case "CO":
+            case "ICP":
+            case "CVP":
+            case "SpO2":
             case "MAP":
                 return 1;
-            case "CVP":
-                return 0;
-            case "VT":
-                return 0;
+            case "pH":
+                return 2;
             default:
                 return 0;
         }
     }
 
-    //Returns the maximum value a heading should ever have
-    static int getMaxValue(String val) {
+    static String getGreenRange(String val){
         switch (val) {
             case "HR":
-                return 200;
+                return "60,120";
             case "SBP":
-                return 140;
+                return "70,140";
             case "DBP":
-                return 100;
+                return "60,80";
             case "MAP":
-                return 100;
+                return "70,100";
+            case "RR":
+                return "7,30";
+            case "VT":
+                return "400,1000";
+            case "SpO2":
+                return "95,100";
+            case "TBody":
+            case "TBlood":
+                return "35,38";
             case "CVP":
-                return 10;
+                return "-2,7";
+            case "CO":
+                return "5,7";
+            case "ICP":
+                return "0,10";
+            case "PaO2":
+                return "55,350";
+            case "PaCO2":
+                return "30,45";
+            case "pH":
+                return "7.40,7.47";
+            case "Hb":
+                return "12,16";
+            case "Hct":
+                return "30-50";
+            case "PvO2":
+            case "PvCO2":
+            case "PACO2":
+                return "35,45";
+            case "PAO2":
+                return "100,600";
+            default:
+                return "";
+        }
+    }
+
+    static String getAmberRange(String val){
+        switch (val) {
+            case "HR":
+                return "40,160";
+            case "SBP":
+                return "60,160";
+            case "DBP":
+                return "50,110";
+            case "MAP":
+                return "60,120";
+            case "RR":
+                return "6,35";
+            case "VT":
+                return "200,1200";
+            case "SpO2":
+                return "85,95";
+            case "TBody":
+            case "TBlood":
+                return "33-39";
+            case "CVP":
+                return "-5,15";
+            case "CO":
+                return "4,9";
+            case "ICP":
+                return "0,20";
+            case "PaO2":
+                return "50,360";
+            case "PaCO2":
+                return "25,50";
+            case "pH":
+                return "7.3,7.5";
+            case "Hb":
+                return "10.5,18";
+            case "Hct":
+                return "25,55";
+            case "PvO2":
+            case "PvCO2":
+                return "30,55";
+            case "PACO2":
+                return "30,50";
+            case "PAO2":
+                return "90,760";
+            default:
+                return "";
+        }
+    }
+
+    static String getRedRange(String val){
+        switch (val) {
+            case "HR":
+                return "0,220";
+            case "SBP":
+                return "0,250";
+            case "DBP":
+                return "0,200";
+            case "MAP":
+                return "0,150";
+            case "RR":
+                return "0,40";
+            case "VT":
+                return "0,2000";
+            case "SpO2":
+                return "0,100";
+            case "TBody":
+            case "TBlood":
+                return "20,42";
+            case "CVP":
+                return "-7,35";
+            case "CO":
+                return "0,15";
+            case "ICP":
+                return "0,30";
+            case "PaO2":
+                return "0,400";
+            case "PaCO2":
+                return "0,60";
+            case "pH":
+                return "7.1-7.65";
+            case "Hb":
+                return "0,25";
+            case "Hct":
+            case "PACO2":
+            case "PvO2":
+            case "PvCO2":
+                return "0,70";
+            case "PAO2":
+                return "0,800";
+            default:
+                return "";
+        }
+    }
+
+
+    //Returns the maximum value a heading should ever have
+    static double getMaxValue(String val) {
+        switch (val) {
+            case "HR":
+                return 220;
+            case "SBP":
+                return 250;
+            case "DBP":
+                return 200;
+            case "MAP":
+                return 150;
+            case "RR":
+                return 40;
             case "VT":
                 return 600;
+            case "SpO2":
+                return 100;
+            case "TBody":
+            case "TBlood":
+                return 42;
+            case "CVP":
+                return 35;
+            case "CO":
+                return 15;
+            case "ICP":
+                return 30;
+            case "PaO2":
+                return 400;
+            case "PaCO2":
+                return 60;
+            case "pH":
+                return 7.65;
+            case "Hb":
+                return 25;
+            case "Hct":
+            case "PvO2":
+            case "PvCO2":
+            case "PACO2":
+                return 70;
+            case "PAO2":
+                return 800;
             default:
-                return -1;
+                return 0;
         }
-
+    }
+    static double getMinValue(String val){
+        switch (val){
+            case "TBody":
+            case "TBlood":
+                return 20;
+            case "CVP":
+                return -7;
+            case "PH":
+                return 7.1;
+            default:
+                return 0;
+        }
     }
 
     //Returns the unit for a given heading
@@ -84,8 +259,8 @@ class PureFunctions {
                 return "MAP";
             case "CVP":
                 return "CVP";
-            case "VT":
-                return "VT";
+            case "RR":
+                return "RR";
             default:
                 return "N/A";
         }

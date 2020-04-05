@@ -64,7 +64,7 @@ public class GaugeBuilder {
         headerBox.setAlignment(Pos.CENTER);
         headerBox.getChildren().addAll(header,backButton);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
-        currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("unit").title("Title").build();
+        currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("").title("HR").build();
         currentGauge.setForegroundBaseColor(Color.BLACK);
         gaugeBox.getChildren().add(currentGauge);
         currentGauge.setPrefSize(800,800);
