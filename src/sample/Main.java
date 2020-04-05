@@ -23,6 +23,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,6 +32,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import java.util.concurrent.atomic.AtomicReference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -68,11 +71,13 @@ public class Main extends Application {
     private TableView eventBox;
     private Label timeLabel;
     private int eventIndex = 0;
+    private Stage mainStage;
 
     @Override
 
     //Initial scene setup
     public void start(Stage stage) {
+        mainStage = stage;
         dataReader = null;
         eventReader = null;
         popup = new Popup();
@@ -94,7 +99,6 @@ public class Main extends Application {
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
         Button gaugeButton = new Button("Custom Gauges");
         sample.GaugeBuilder gb = new sample.GaugeBuilder();
-        gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene()));
         selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
         headerPicker.setPromptText("Choose a file to select headers");
@@ -119,14 +123,13 @@ public class Main extends Application {
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
         BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
-        //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
-        //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
+
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
@@ -143,57 +146,24 @@ public class Main extends Application {
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         dataType.setText("Gauge Type");
-        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal);
-        //borderPane.setCenter(new ColorPicker());
+        TableColumn<InputTable, TextField> redSection = new TableColumn<>();
+        redSection.setMinWidth(80);
+        redSection.setCellValueFactory(new PropertyValueFactory<>("red"));
+        redSection.setText("Red Section");
+        TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
+        amberSection.setMinWidth(80);
+        amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
+        amberSection.setText("Amber Section");
+        TableColumn<InputTable, TextField> greenSection = new TableColumn<>();
+        greenSection.setMinWidth(80);
+        greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
+        greenSection.setText("Green Section");
+        gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
+        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,redSection,amberSection,greenSection);
         stage.show();
     }
-    /*public void start(Stage s)
-    {
-        // set title for the stage
-        s.setTitle("creating color picker");
 
-        // create a tile pane
-        TilePane r = new TilePane();
-        BorderPane b = new BorderPane();
-        b.setCenter(r);
-        // create a label
-        Label l = new Label("This is a color picker example ");
-        Label l1 = new Label("no selected color ");
 
-        // create a color picker
-        ColorPicker cp = new ColorPicker();
-        ColorPicker cp2 = new ColorPicker();
-
-        // create a event handler
-        EventHandler<ActionEvent> event = new EventHandler<ActionEvent>() {
-            public void handle(ActionEvent e)
-            {
-                // color
-                Color c = cp.getValue();
-
-                // set text of the label to RGB value of color
-                l1.setText("Red = " + c.getRed() + ", Green = " + c.getGreen()
-                        + ", Blue = " + c.getBlue());
-            }
-        };
-
-        // set listener
-        cp.setOnAction(event);
-
-        // add label
-        r.getChildren().add(l);
-        r.getChildren().add(cp);
-        r.getChildren().add(cp2);
-        r.getChildren().add(l1);
-        b.setCenter(cp);
-        // create a scene
-        Scene sc = new Scene(b, 500, 200);
-
-        // set the scene
-        s.setScene(sc);
-
-        s.show();
-    }*/
     private void openEventLog()
     {
         String line;
@@ -224,19 +194,19 @@ public class Main extends Application {
         }
         else
         {
-            showPopup("Choose at least one header to display",stage);
+            showPopup("Choose at least one header to display");
         }
     }
 
     //Displays popup with given message
-    private void showPopup(String message, Stage stage) {
+    private void showPopup(String message) {
         Label popupLabel = new Label(message);
         popupLabel.setStyle(" -fx-background-color: orangered;");// set background
         popupLabel.setMinWidth(80); // set size of label
         popupLabel.setMinHeight(50);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(stage, stage.getScene().getWindow().getX() + 5, stage.getScene().getWindow().getY() + 20);
+        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 20);
 
     }
 
@@ -261,7 +231,7 @@ public class Main extends Application {
         timerStarted = true;
     }
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
-        Gauge newGauge;
+        Gauge newGauge = null;
         int maxValue, minValue;
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
@@ -273,29 +243,55 @@ public class Main extends Application {
         }catch(Exception e){
             minValue = 0;
         }
+        int[] sections = parseSectionData(data);
+        Section redSection1 = new Section(sections[0],sections[1],Color.RED);
+        Section redSection2 = new Section(sections[4],sections[5],Color.RED);
+        Section amberSection1 = new Section(sections[1],sections[2],Color.valueOf("#FFBF00"));
+        Section amberSection2 = new Section(sections[3],sections[4],Color.valueOf("#FFBF00"));
+        Section greenSection = new Section(sections[2],sections[3],Color.GREEN);
+        GaugeBuilder builder = GaugeBuilder.create();
         if (type == Gauge.SkinType.SIMPLE_SECTION){
-            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.SIMPLE_SECTION);
-            Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
+
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
-            newGauge.getSections().add(section);
-            return newGauge;
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.TILE_SPARK_LINE);
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
+        }
+        if (newGauge != null){
+            newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
             return newGauge;
         }
-        GaugeBuilder builder = GaugeBuilder.create().skinType(Gauge.SkinType.MODERN);
-        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
-        Section section = new Section((PureFunctions.getMaxValue(data.headerName) / 2 - 15),(PureFunctions.getMaxValue(data.headerName) / 2 + 20),Color.GREEN);
-        newGauge.getSections().add(section);
+        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
+        newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
         return newGauge;
+    }
+    private int[] parseSectionData(InputTable data){
+        int[] results = new int[6];
+        parseOneSection(results,0,data.getRed().getText());
+        parseOneSection(results,1,data.getAmber().getText());
+        parseOneSection(results,2,data.getGreen().getText());
+        return results;
+    }
+    private void parseOneSection(int[]results, int index,String text ){
+        String[] textArray = text.split(",");
+        if (textArray.length == 2){
+            try {
+                results[index] = Integer.parseInt(textArray[0]);
+                results[results.length-1-index] = Integer.parseInt(textArray[1]);
+            } catch(Exception e) {
+                results[index] = 0;
+                results[results.length-1-index] = 0;
+            }
+        } else {
+            results[index] = 0;
+            results[results.length-1-index] = 0;
+        }
     }
     //Updates gauges at a regular interval, called by EventTimerTask.run()
     void updateGauges(){
@@ -334,10 +330,6 @@ public class Main extends Application {
 
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
-        //final float muStep = (float) updateFrequency/5000;
-        //float prevTime;
-        //prevTime = roundToDP((currentStep+mu-muStep)*5, (int) Math.ceil(Math.log(1/(double)muStep)));
-        //System.out.println("Prev: " + prevTime);
         while (eventLog.get(eventIndex).getTime() <= currentTime){
             eventBox.getItems().add(new eventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
             eventIndex++;
@@ -409,12 +401,62 @@ public class Main extends Application {
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
             typePicker.getSelectionModel().selectFirst();
-            TextField min = new TextField();
-            min.textProperty().setValue("0");
-            TextField max = new TextField();
-            max.textProperty().setValue(Integer.toString(PureFunctions.getMaxValue(item)));
-            tv.getItems().add(new InputTable(item,typePicker,min,max));
+            TextField min = newValidatingDoubleTextField("0");
+            TextField max = newValidatingDoubleTextField(Integer.toString(PureFunctions.getMaxValue(item)));
+            TextField red = newValidatingRangeTextField("");
+            TextField amber = newValidatingRangeTextField("");
+            TextField green = newValidatingRangeTextField("");
+            tv.getItems().add(new InputTable(item,typePicker,min,max,red,amber,green));
         }
+    }
+    private TextField newValidatingRangeTextField(String initialValue){
+        AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
+        TextField tf = new TextField();
+        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateRange(tf,oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
+        tf.textProperty().setValue(initialValue);
+        return tf;
+    }
+    private boolean validateRange(TextField textBox,Boolean oldVal){
+        if (oldVal){
+            if (textBox.getText().compareTo("") == 0){
+                return true;
+            }
+            String[] textArray = textBox.getText().split(",");
+            if (textArray.length == 2){
+                try {
+                    int first = Integer.parseInt(textArray[0]);
+                    int second = Integer.parseInt(textArray[1]);
+                    if(first<=second){
+                        return true;
+                    } else {
+                        showPopup("First value of a range must be smaller than the second");
+                        return false;
+                    }
+                } catch(Exception e) {
+
+                }
+            }
+            showPopup("Range should be \"Integer,Integer\"");
+        }
+        return false;
+    }
+    private TextField newValidatingDoubleTextField(String initialValue){
+        AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
+        TextField tf = new TextField();
+        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateDouble(tf,oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
+        tf.textProperty().setValue(initialValue);
+        return tf;
+    }
+    private boolean validateDouble(TextField textBox, boolean oldVal){
+        if (oldVal){
+            try {
+                double newV = Double.parseDouble(textBox.getText());
+                return true;
+            } catch (NumberFormatException e) {
+                showPopup("Error inputting decimal number");
+            }
+        }
+        return false;
     }
 
     public class eventData {
@@ -630,7 +672,7 @@ public class Main extends Application {
         else if (file != null){
             if (getFileExtension(file.getPath()).compareTo("csv")!=0)
             {
-                showPopup("Please choose a CSV file",stage);
+                showPopup("Please choose a CSV file");
             }
         }
     }
