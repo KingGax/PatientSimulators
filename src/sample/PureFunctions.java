@@ -37,9 +37,6 @@ class PureFunctions {
             case "TBody":
             case "CO":
             case "ICP":
-            case "CVP":
-            case "SpO2":
-            case "MAP":
                 return 1;
             case "pH":
                 return 2;
@@ -250,19 +247,36 @@ class PureFunctions {
     static String getUnit(String val) {
         switch (val) {
             case "HR":
+            case "RR":
                 return "BPM";
             case "SBP":
-                return "SBP";
             case "DBP":
-                return "DBP";
             case "MAP":
-                return "MAP";
+            case "ICP":
+            case "PaO2":
+            case "PaCO2":
+            case "PAO2":
+                return "mmHg";
+            case "VT":
+                return "ml";
+            case "SpO2":
+            case "Hct":
+                return "%";
+            case "TBody":
+            case "TBlood":
+                return "oC";
             case "CVP":
-                return "CVP";
-            case "RR":
-                return "RR";
+                return "-2,7";
+            case "CO":
+                return "l/min";
+            case "Hb":
+                return "g/dl";
+            case "PvO2":
+            case "PvCO2":
+            case "PACO2":
+                return "mmH";
             default:
-                return "N/A";
+                return "";
         }
     }
 
