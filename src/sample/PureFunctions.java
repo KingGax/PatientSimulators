@@ -37,9 +37,6 @@ class PureFunctions {
             case "TBody":
             case "CO":
             case "ICP":
-            case "CVP":
-            case "SpO2":
-            case "MAP":
                 return 1;
             case "pH":
                 return 2;
@@ -82,7 +79,7 @@ class PureFunctions {
             case "Hb":
                 return "12,16";
             case "Hct":
-                return "30-50";
+                return "30,50";
             case "PvO2":
             case "PvCO2":
             case "PACO2":
@@ -112,7 +109,7 @@ class PureFunctions {
                 return "85,95";
             case "TBody":
             case "TBlood":
-                return "33-39";
+                return "33,39";
             case "CVP":
                 return "-5,15";
             case "CO":
@@ -171,7 +168,7 @@ class PureFunctions {
             case "PaCO2":
                 return "0,60";
             case "pH":
-                return "7.1-7.65";
+                return "7.1,7.65";
             case "Hb":
                 return "0,25";
             case "Hct":
@@ -201,7 +198,7 @@ class PureFunctions {
             case "RR":
                 return 40;
             case "VT":
-                return 600;
+                return 2000;
             case "SpO2":
                 return 100;
             case "TBody":
@@ -239,7 +236,7 @@ class PureFunctions {
                 return 20;
             case "CVP":
                 return -7;
-            case "PH":
+            case "pH":
                 return 7.1;
             default:
                 return 0;
@@ -250,19 +247,34 @@ class PureFunctions {
     static String getUnit(String val) {
         switch (val) {
             case "HR":
+            case "RR":
                 return "BPM";
             case "SBP":
-                return "SBP";
             case "DBP":
-                return "DBP";
             case "MAP":
-                return "MAP";
+            case "ICP":
+            case "PaO2":
+            case "PaCO2":
+            case "PAO2":
             case "CVP":
-                return "CVP";
-            case "RR":
-                return "RR";
+            case "PvO2":
+            case "PvCO2":
+            case "PACO2":
+                return "mmHg";
+            case "VT":
+                return "ml";
+            case "SpO2":
+            case "Hct":
+                return "%";
+            case "TBody":
+            case "TBlood":
+                return "oC";
+            case "CO":
+                return "l/min";
+            case "Hb":
+                return "g/dl";
             default:
-                return "N/A";
+                return "";
         }
     }
 

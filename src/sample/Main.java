@@ -146,10 +146,6 @@ public class Main extends Application {
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         dataType.setText("Gauge Type");
-        TableColumn<InputTable, TextField> redSection = new TableColumn<>();
-        redSection.setMinWidth(80);
-        redSection.setCellValueFactory(new PropertyValueFactory<>("red"));
-        redSection.setText("Red Section");
         TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
         amberSection.setMinWidth(80);
         amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
@@ -159,11 +155,23 @@ public class Main extends Application {
         greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
         greenSection.setText("Green Section");
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
-        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,redSection,amberSection,greenSection);
+        selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
         stage.show();
     }
 
+    private void setDefaultGaugeCustomisation(Gauge gauge){
+        gauge.setBackgroundPaint(Color.WHITE);
+        gauge.setMajorTickMarkLengthFactor(0.6);
+        gauge.setMediumTickMarkLengthFactor(0.6);
+        gauge.setMinorTickMarkLengthFactor(0.5);
+        gauge.setBorderWidth(0.4);
+        gauge.setBorderPaint(Color.BLACK);
+        gauge.setLedVisible(true);
+        gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
+        gauge.setKnobType(Gauge.KnobType.PLAIN);
+        //gauge.setMinorTickMarksVisible(false);
 
+    }
     private void openEventLog()
     {
         String line;
@@ -233,49 +241,59 @@ public class Main extends Application {
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
         Gauge newGauge = null;
         double maxValue, minValue;
+        int decimals = PureFunctions.getDecimals(data.headerName);
+        int tickLabelDecimals;
+        tickLabelDecimals = decimals - 1;
+        if (decimals < 0) tickLabelDecimals = 0;
         try {
-            maxValue = Integer.parseInt(data.getMax().getText());
+            maxValue = Double.parseDouble(data.getMax().getText());
         }catch(Exception e){
           maxValue = PureFunctions.getMaxValue(data.headerName);
         }
         try {
-            minValue = Integer.parseInt(data.getMin().getText());
+            minValue = Double.parseDouble(data.getMin().getText());
         }catch(Exception e){
-            minValue = 0;
+            minValue = PureFunctions.getMaxValue(data.headerName);
         }
         double[] sections = parseSectionData(data);
-        Section redSection1 = new Section(sections[0],sections[1],Color.RED);
-        Section redSection2 = new Section(sections[4],sections[5],Color.RED);
-        Section amberSection1 = new Section(sections[1],sections[2],Color.valueOf("#FFBF00"));
-        Section amberSection2 = new Section(sections[3],sections[4],Color.valueOf("#FFBF00"));
-        Section greenSection = new Section(sections[2],sections[3],Color.GREEN);
         GaugeBuilder builder = GaugeBuilder.create();
         if (type == Gauge.SkinType.SIMPLE_SECTION){
 
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
             newGauge.setAnimated(true);
         }
         if (newGauge != null){
-            newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
+            addSections(sections,newGauge);
             return newGauge;
         }
-        newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.MODERN).build();
-        newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
+        newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
+        newGauge.setSkinType(Gauge.SkinType.GAUGE);
+        addSections(sections,newGauge);
+        setDefaultGaugeCustomisation(newGauge);
         return newGauge;
     }
+    private void addSections(double[] sections,Gauge newGauge){
+        if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {
+            Section amberSection1 = new Section(sections[0],sections[1],Color.valueOf("#FFBF00"));
+            Section amberSection2 = new Section(sections[2],sections[3],Color.valueOf("#FFBF00"));
+            Section greenSection = new Section(sections[1],sections[2],Color.GREEN);
+            Section redSection1 = new Section(newGauge.getMinValue(),sections[0],Color.RED);
+            Section redSection2 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
+            newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
+        }//if no sections, do not add red or any sections
+    }
     private double[] parseSectionData(InputTable data){
-        double[] results = new double[6];
-        parseOneSection(results,0,data.getRed().getText());
-        parseOneSection(results,1,data.getAmber().getText());
-        parseOneSection(results,2,data.getGreen().getText());
+        double[] results = new double[4];
+        parseOneSection(results,0,data.getAmber().getText());
+        parseOneSection(results,1,data.getGreen().getText());
         return results;
     }
     private void parseOneSection(double[]results, int index,String text ){
@@ -403,10 +421,9 @@ public class Main extends Application {
             typePicker.getSelectionModel().selectFirst();
             TextField min = newValidatingDoubleTextField(Double.toString(PureFunctions.getMinValue(item)));
             TextField max = newValidatingDoubleTextField(Double.toString(PureFunctions.getMaxValue(item)));
-            TextField red = newValidatingRangeTextField(PureFunctions.getRedRange(item));
             TextField amber = newValidatingRangeTextField(PureFunctions.getAmberRange(item));
             TextField green = newValidatingRangeTextField(PureFunctions.getGreenRange(item));
-            tv.getItems().add(new InputTable(item,typePicker,min,max,red,amber,green));
+            tv.getItems().add(new InputTable(item,typePicker,min,max,amber,green));
         }
     }
     private TextField newValidatingRangeTextField(String initialValue){
