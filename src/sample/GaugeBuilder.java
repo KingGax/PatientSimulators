@@ -1,6 +1,7 @@
 package sample;
 
 import eu.hansolo.medusa.Gauge;
+import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.TickLabelLocation;
 import eu.hansolo.medusa.TickLabelOrientation;
 import javafx.event.ActionEvent;
@@ -64,7 +65,7 @@ public class GaugeBuilder {
         headerBox.setAlignment(Pos.CENTER);
         headerBox.getChildren().addAll(header,backButton);
         eu.hansolo.medusa.GaugeBuilder builder = eu.hansolo.medusa.GaugeBuilder.create().skinType(Gauge.SkinType.GAUGE);
-        currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("").title("HR").build();
+        currentGauge = builder.decimals(0).maxValue(50).minValue(0).unit("BPM").title("HR").build();
         currentGauge.setForegroundBaseColor(Color.BLACK);
         gaugeBox.getChildren().add(currentGauge);
         currentGauge.setPrefSize(800,800);
@@ -443,6 +444,8 @@ public class GaugeBuilder {
         currentGauge.setMinorTickMarkLengthFactor(minorTickLength);
         currentGauge.setTickLabelsVisible(tickLabelsVisible);
         currentGauge.setTickLabelLocation(tickLabelLocation);
+        currentGauge.addSection(new Section(0,20,Color.GREEN));
+        currentGauge.addArea(new Section(20,40,Color.RED));
     }
 
 }

@@ -79,7 +79,7 @@ class PureFunctions {
             case "Hb":
                 return "12,16";
             case "Hct":
-                return "30-50";
+                return "30,50";
             case "PvO2":
             case "PvCO2":
             case "PACO2":
@@ -109,7 +109,7 @@ class PureFunctions {
                 return "85,95";
             case "TBody":
             case "TBlood":
-                return "33-39";
+                return "33,39";
             case "CVP":
                 return "-5,15";
             case "CO":
@@ -168,7 +168,7 @@ class PureFunctions {
             case "PaCO2":
                 return "0,60";
             case "pH":
-                return "7.1-7.65";
+                return "7.1,7.65";
             case "Hb":
                 return "0,25";
             case "Hct":
@@ -198,7 +198,7 @@ class PureFunctions {
             case "RR":
                 return 40;
             case "VT":
-                return 600;
+                return 2000;
             case "SpO2":
                 return 100;
             case "TBody":
@@ -236,7 +236,7 @@ class PureFunctions {
                 return 20;
             case "CVP":
                 return -7;
-            case "PH":
+            case "pH":
                 return 7.1;
             default:
                 return 0;
@@ -256,6 +256,10 @@ class PureFunctions {
             case "PaO2":
             case "PaCO2":
             case "PAO2":
+            case "CVP":
+            case "PvO2":
+            case "PvCO2":
+            case "PACO2":
                 return "mmHg";
             case "VT":
                 return "ml";
@@ -265,16 +269,10 @@ class PureFunctions {
             case "TBody":
             case "TBlood":
                 return "oC";
-            case "CVP":
-                return "-2,7";
             case "CO":
                 return "l/min";
             case "Hb":
                 return "g/dl";
-            case "PvO2":
-            case "PvCO2":
-            case "PACO2":
-                return "mmH";
             default:
                 return "";
         }

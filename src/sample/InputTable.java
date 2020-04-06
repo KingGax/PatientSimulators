@@ -11,12 +11,11 @@ public class InputTable {
     private TextField amber;
     private TextField green;
 
-    public InputTable(String name, ComboBox<String> cb, TextField min, TextField max,TextField red,TextField amber,TextField green) {
+    public InputTable(String name, ComboBox<String> cb, TextField min, TextField max,TextField amber,TextField green) {
         this.headerName = name;
         this.options = cb;
         this.min = min;
         this.max = max;
-        this.red = red;
         this.amber = amber;
         this.green = green;
     }
