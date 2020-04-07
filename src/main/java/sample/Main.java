@@ -23,6 +23,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.scene.text.Font;
 import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
@@ -88,33 +89,48 @@ public class Main extends Application {
         typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
-        Button fileSelectorButton = new Button("Select File");
-        Button eventLogSelecter = new Button("Select Event Log");
+        title.getStyleClass().add("title");
+        title.setPadding(new Insets(10, 20, 0, 20));
+        title.setFont(Font.font("fantasy"));
+        Label selectFileLabel = new Label("Please select either a Data File or an Event Log:");
+        selectFileLabel.getStyleClass().add("select-file-label");
+        selectFileLabel.setFont(Font.font("fantasy"));
+        Button fileSelectorButton = new Button("Upload Data File");
+        fileSelectorButton.getStyleClass().add("button-blue");
+        Button eventLogSelecter = new Button("Upload Event Log");
+        eventLogSelecter.getStyleClass().add("button-yellow");
         Button simulationButton = new Button("Run Simulation");
+        simulationButton.getStyleClass().add("button-green");
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
         GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         selectedHeaderTitles.setOnMouseClicked(e -> handleMouse(e,selectedHeaderTitles));
-        Button gaugeButton = new Button("Custom Gauges");
+        Button gaugeButton = new Button("Build a Custom Gauge");
+        gaugeButton.getStyleClass().add("button-yellow");
         sample.GaugeBuilder gb = new sample.GaugeBuilder();
         selectedHeaders.addColumn(0,selectedHeaderTitles);
         headerPicker =  new ComboBox<>();
-        headerPicker.setPromptText("Choose a file to select headers");
+        headerPicker.setPromptText("Select headers");
+        headerPicker.getStyleClass().add("button-blue");
         headerPicker.setMinWidth(200);
         Button addHeader = new Button("Add Header");
+        addHeader.getStyleClass().add("button-blue");
         addHeader.setMinWidth(200);
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
         HBox fileSelectionBox = new HBox(15);
         fileSelectionBox.setAlignment(Pos.CENTER);
         fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter);
-        HBox chooseHeadersBox = new HBox(20);
+        HBox chooseHeadersBox = new HBox(10);
+        VBox inputHeadersBox = new VBox(20);
+        inputHeadersBox.setPadding(new Insets(120, 0, 0, 0));
+        inputHeadersBox.getChildren().addAll(headerPicker, addHeader);
         chooseHeadersBox.setAlignment(Pos.CENTER);
         VBox centreBox = new VBox(30);
-        chooseHeadersBox.getChildren().addAll(headerPicker,addHeader, selectedHeaders);
+        chooseHeadersBox.getChildren().addAll(inputHeadersBox, selectedHeaders);
         selectedHeaderTitles.prefWidthProperty().bind(chooseHeadersBox.widthProperty());
-        centreBox.getChildren().addAll(title,fileSelectionBox,chooseHeadersBox,simulationButton,gaugeButton);
+        centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,gaugeButton,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
         header.getChildren().addAll(title);
@@ -122,38 +138,47 @@ public class Main extends Application {
         header.setMinHeight(30);
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
-        BorderPane.setMargin(centreBox,new Insets(0,10,0,10));
+        BorderPane.setMargin(centreBox,new Insets(0,10,10,10));
+        //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
+        //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
+        welcome.getStylesheets().add("sample/stylesheet/styling.css");
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
         simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
+        borderPane.setId("background");
 
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
+        headerName.getStyleClass().add("table-heads");
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
-        dataType.setMinWidth(150);
+        dataType.setMinWidth(110);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
         TableColumn<InputTable, TextField> minVal = new TableColumn<>();
-        minVal.setMinWidth(80);
+        minVal.setMinWidth(50);
         minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
         minVal.setText("Min");
+        minVal.getStyleClass().add("table-heads");
         TableColumn<InputTable, TextField> maxVal = new TableColumn<>();
-        maxVal.setMinWidth(80);
+        maxVal.setMinWidth(50);
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
+        maxVal.getStyleClass().add("table-heads");
         dataType.setText("Gauge Type");
         TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
         amberSection.setMinWidth(80);
         amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
         amberSection.setText("Amber Section");
+        amberSection.getStyleClass().add("table-heads");
         TableColumn<InputTable, TextField> greenSection = new TableColumn<>();
         greenSection.setMinWidth(80);
         greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
         greenSection.setText("Green Section");
+        greenSection.getStyleClass().add("table-heads");
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
         stage.show();
@@ -209,12 +234,13 @@ public class Main extends Application {
     //Displays popup with given message
     private void showPopup(String message) {
         Label popupLabel = new Label(message);
-        popupLabel.setStyle(" -fx-background-color: orangered;");// set background
-        popupLabel.setMinWidth(80); // set size of label
+        popupLabel.getStyleClass().add("pop-up-message");
+        popupLabel.setMinWidth(960); // set size of label
         popupLabel.setMinHeight(50);
+        popupLabel.setAlignment(Pos.CENTER);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 20);
+        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 30);
 
     }
 
@@ -229,10 +255,11 @@ public class Main extends Application {
             pane.add(gaugeBox, i%2, i /2);
             gauges.add(gauge);
         }
+        pane.setPrefSize(570, 400);
         pane.setPadding(new Insets(20));
         pane.setHgap(15);
         pane.setVgap(15);
-        pane.setBackground(new Background(new BackgroundFill(Color.rgb(39,44,50), CornerRadii.EMPTY, Insets.EMPTY)));
+        pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
         TimerTask task = new EventTimerTask(this);
         eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
@@ -261,13 +288,16 @@ public class Main extends Application {
 
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setValueColor(Color.WHITE);
+            newGauge.setTitleColor(Color.WHITE);
+            newGauge.setUnitColor(Color.WHITE);
+            newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
         }
         if (type == Gauge.SkinType.TILE_SPARK_LINE) {
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.rgb(39,44,50));
+            newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
         }
         if (newGauge != null){
@@ -276,6 +306,11 @@ public class Main extends Application {
         }
         newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
         newGauge.setSkinType(Gauge.SkinType.GAUGE);
+        newGauge.setValueColor(Color.WHITE);
+        newGauge.setTitleColor(Color.WHITE);
+        newGauge.setUnitColor(Color.WHITE);
+        newGauge.setForegroundBaseColor((Color.WHITE));
+        newGauge.setBarBackgroundColor(Color.WHITE);
         addSections(sections,newGauge);
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
@@ -389,7 +424,7 @@ public class Main extends Application {
 
     //Updates time label in FX thread
     private void updateTimeLabel(){
-        Platform.runLater(() -> timeLabel.setText((currentStep + mu) * 5 +"s"));
+        Platform.runLater(() -> timeLabel.setText("Time Elapsed: " + (currentStep + mu) * 5 +"s"));
     }
 
     private void updateEventBox(){
@@ -552,12 +587,17 @@ public class Main extends Application {
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
+        midHBox.getStylesheets().add("sample/stylesheet/styling.css");
         TableColumn<String, eventData> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+        timeCol.getStyleClass().add("table-heads");
         TableColumn<String, eventData> eventCol = new TableColumn<>("Event");
         eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
+        eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
+        timeCol.setMinWidth(80);
+        eventCol.setMinWidth(300);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);
@@ -589,11 +629,15 @@ public class Main extends Application {
             updateEventBox();
             updateTimeLabel();
         });
+        timeSlider.setPadding(new Insets(15, 0, 0, 0));
+        timeLabel.setStyle("-fx-text-fill: white");
         topVBox.getChildren().addAll(timeSlider, timeLabel);
         topHBox.getChildren().addAll(playbackButton, topVBox);
+        topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
+        topHBox.setStyle("-fx-border-color: white; -fx-border-radius: 5;");
         bp.setTop(topHBox);
         initialiseGauges(selectedHeaderTitles, gp);
-        return new Scene(bp, 640, 480);
+        return new Scene(bp, 960, 800);
     }
 
     //Handles stopping and starting of playback
