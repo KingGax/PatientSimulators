@@ -3,7 +3,6 @@ package sample;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.TickLabelLocation;
-import eu.hansolo.medusa.TickLabelOrientation;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Insets;
@@ -20,7 +19,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
-import java.nio.file.FileSystemLoopException;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -88,7 +86,7 @@ public class GaugeBuilder {
         } });
         Event.fireEvent(selectEditType,new ActionEvent());//triggers it to show colours by default
         Scene scene = new Scene(borderPane, 960, 800);
-        scene.getStylesheets().add("sample/stylesheet/styling.css");
+        scene.getStylesheets().add("css/styling.css");
         return scene;
     }
     private void saveCurrentGauge(String filename){

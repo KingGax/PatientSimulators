@@ -3,11 +3,8 @@ package sample;
 import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
-import eu.hansolo.medusa.skins.GaugeSkin;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -24,7 +21,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
-import org.w3c.dom.Text;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -36,17 +32,8 @@ import java.util.regex.Pattern;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 
 //TODO:
-//-Add max values for every conceivable header
 //-Fix occasional "IndexOutOfRangeException index -1 out of range 2 error popping up approx. 1/20 tests.
 //-Fix bugs listed on Jira
 
@@ -142,7 +129,7 @@ public class Main extends Application {
         //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
         //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
-        welcome.getStylesheets().add("sample/stylesheet/styling.css");
+        welcome.getStylesheets().add("css/styling.css");
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
@@ -305,13 +292,7 @@ public class Main extends Application {
             addSections(sections,newGauge);
             return newGauge;
         }
-        newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
-        newGauge.setSkinType(Gauge.SkinType.GAUGE);
-        newGauge.setValueColor(Color.WHITE);
-        newGauge.setTitleColor(Color.WHITE);
-        newGauge.setUnitColor(Color.WHITE);
-        newGauge.setForegroundBaseColor((Color.WHITE));
-        newGauge.setBarBackgroundColor(Color.WHITE);
+        newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
         addSections(sections,newGauge);
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
@@ -588,7 +569,7 @@ public class Main extends Application {
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
-        midHBox.getStylesheets().add("sample/stylesheet/styling.css");
+        midHBox.getStylesheets().add("css/styling.css");
         TableColumn<String, eventData> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
         timeCol.getStyleClass().add("table-heads");
