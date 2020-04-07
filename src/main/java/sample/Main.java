@@ -158,6 +158,7 @@ public class Main extends Application {
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(110);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
+        dataType.getStyleClass().add("table-heads");
         TableColumn<InputTable, TextField> minVal = new TableColumn<>();
         minVal.setMinWidth(50);
         minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
