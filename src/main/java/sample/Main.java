@@ -280,14 +280,60 @@ public class Main extends Application {
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
     }
-    private void addSections(double[] sections,Gauge newGauge){
-        if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {
-            Section amberSection1 = new Section(sections[0],sections[1],Color.valueOf("#FFBF00"));
-            Section amberSection2 = new Section(sections[2],sections[3],Color.valueOf("#FFBF00"));
-            Section greenSection = new Section(sections[1],sections[2],Color.GREEN);
-            Section redSection1 = new Section(newGauge.getMinValue(),sections[0],Color.RED);
-            Section redSection2 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
-            newGauge.getSections().addAll(redSection1,redSection2,amberSection1,amberSection2,greenSection);
+    private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
+        if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {//checks there is at least one section
+            if (sections[0] == 0 && sections[3] == 0){//no amber section so add just green
+                newGauge.addSection(new Section(sections[1],sections[2],Color.GREEN));
+                Section redSection1 = new Section(newGauge.getMinValue(),sections[1],Color.RED);
+                Section redSection2 = new Section(sections[2],newGauge.getMaxValue(),Color.RED);
+                newGauge.getSections().addAll(redSection1,redSection2);
+            } else if (sections[1] == 0 && sections[2] == 0) { //if no green section just add amber
+                newGauge.addSection(new Section(sections[0],sections[3],Color.valueOf("#FFBF00")));
+                Section redSection1 = new Section(newGauge.getMinValue(),sections[0],Color.RED);
+                Section redSection2 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
+                newGauge.getSections().addAll(redSection1,redSection2);
+            } else { //this means there is green and amber sections so add green immediately
+                newGauge.addSection(new Section(sections[1],sections[2],Color.GREEN));
+                if (sections[0] < sections[1]){ // if there is amber below the green add lower amber section
+                    if (sections[3] < sections[1]){//if amber is disjoint
+                        newGauge.addSection(new Section(sections[0],sections[3],Color.valueOf("#FFBF00")));
+                        Section redSection1 = new Section(newGauge.getMinValue(),sections[0],Color.RED);
+                        Section redSection2 = new Section(sections[3],sections[1],Color.RED);
+                        Section redSection3 = new Section(sections[2],newGauge.getMaxValue(),Color.RED);
+                        newGauge.getSections().addAll(redSection1,redSection2,redSection3);
+                    } else {//amber is not disjoint so add lower amber up to green
+                        newGauge.addSection(new Section(sections[0], sections[1], Color.valueOf("#FFBF00")));
+                        if (sections[2] < sections[3]) { //if amber also goes over the top add higher as expected and add red
+                            newGauge.addSection(new Section(sections[2], sections[3], Color.valueOf("#FFBF00")));
+                            Section redSection1 = new Section(newGauge.getMinValue(), sections[0], Color.RED);
+                            Section redSection2 = new Section(sections[3], newGauge.getMaxValue(), Color.RED);
+                            newGauge.getSections().addAll(redSection1, redSection2);
+                        } else { //other end of amber is contained within the green so add red from green boundary and no other amber
+                            Section redSection1 = new Section(newGauge.getMinValue(), sections[0], Color.RED);
+                            Section redSection2 = new Section(sections[2], newGauge.getMaxValue(), Color.RED);
+                            newGauge.getSections().addAll(redSection1, redSection2);
+                        }
+                    }
+                } else { //there is no starting amber below green so first red goes up to green1
+                    if (sections[0] > sections[2]){//if amber is disjoint
+                        newGauge.addSection(new Section(sections[0],sections[3],Color.valueOf("#FFBF00")));
+                        Section redSection1 = new Section(newGauge.getMinValue(),sections[1],Color.RED);
+                        Section redSection2 = new Section(sections[2],sections[0],Color.RED);
+                        Section redSection3 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
+                        newGauge.getSections().addAll(redSection1,redSection2,redSection3);
+                    } else if (sections[2] < sections[3]){ //this means a second amber is necessary so add that and red goes min-green1 and amber2-max
+                        newGauge.addSection(new Section(sections[2],sections[3],Color.valueOf("#FFBF00")));
+                        Section redSection1 = new Section(newGauge.getMinValue(),sections[1],Color.RED);
+                        Section redSection2 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
+                        newGauge.getSections().addAll(redSection1,redSection2);
+                    } else { //other end of amber is contained within the green so add red from green boundary hence min-green1 and green2-max
+                        Section redSection1 = new Section(newGauge.getMinValue(),sections[1],Color.RED);
+                        Section redSection2 = new Section(sections[3],newGauge.getMaxValue(),Color.RED);
+                        newGauge.getSections().addAll(redSection1,redSection2);
+                    }
+                }
+            }
+            newGauge.setSectionsVisible(true);
         }//if no sections, do not add red or any sections
     }
     private double[] parseSectionData(InputTable data){
