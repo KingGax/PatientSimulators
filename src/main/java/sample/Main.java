@@ -33,10 +33,6 @@ import java.util.regex.Pattern;
 import java.util.concurrent.atomic.AtomicReference;
 
 
-//TODO:
-//-Fix occasional "IndexOutOfRangeException index -1 out of range 2 error popping up approx. 1/20 tests.
-//-Fix bugs listed on Jira
-
 public class Main extends Application {
     private BufferedReader dataReader;
     private BufferedReader eventReader;
@@ -52,6 +48,7 @@ public class Main extends Application {
     private Slider timeSlider;
     private ArrayList<eventData> eventLog = new ArrayList<>();
     private boolean paused = false;
+    private boolean eventsSelected = false;
     @FXML
     private TableView<InputTable> selectedHeaderTitles;
     private Popup popup;
@@ -199,6 +196,7 @@ public class Main extends Application {
                 eventData p = new eventData(i,item[1]);
                 eventLog.add(p);
             }
+            eventsSelected = true;
         } catch(IOException e) {
             e.printStackTrace();
         }
@@ -401,7 +399,8 @@ public class Main extends Application {
         }
         Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
         updateTimeLabel();
-        updateEventBox();
+        if (eventsSelected) updateEventBox();
+
     }
 
     //Updates time label in FX thread
@@ -605,10 +604,10 @@ public class Main extends Application {
             int prevStep = currentStep;
             currentStep = (int) Math.floor(timeSlider.getValue())/5;
             mu = ((float)Math.floor(timeSlider.getValue()) - currentStep*5)/((float) (5000/updateFrequency));
-            if (currentStep < prevStep){
-                rebuildEventLog();
+            if (eventsSelected && currentStep < prevStep){
+                if (currentStep < prevStep) rebuildEventLog();
+                updateEventBox();
             }
-            updateEventBox();
             updateTimeLabel();
         });
         timeSlider.setPadding(new Insets(15, 0, 0, 0));
@@ -742,7 +741,7 @@ public class Main extends Application {
         return "";
     }
     //Prompts user to select a file and stores contents in BufferedReader reader
-    private void openFile(FileChooser fileChooser,Stage stage,boolean eventsLog){
+    private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File file = fileChooser.showOpenDialog(stage);
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
