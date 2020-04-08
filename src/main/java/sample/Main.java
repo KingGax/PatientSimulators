@@ -5,6 +5,7 @@ import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -42,6 +43,7 @@ public class Main extends Application {
     private ComboBox<String> headerPicker;
     private int currentStep = 0;
     private final int updateFrequency = 500; //Frequency of gauge updates in ms
+    private float speedModifier = 1.0f;
     private float mu = 0.0f;
     private Timer eventTimer;
     private boolean timerStarted = false;
@@ -55,6 +57,7 @@ public class Main extends Application {
     private ComboBox<String> typeChooserTemplate;
     private TableView eventBox;
     private Label timeLabel;
+    private ComboBox<String> speedCB;
     private int eventIndex = 0;
     private Stage mainStage;
 
@@ -248,7 +251,7 @@ public class Main extends Application {
         pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
         TimerTask task = new EventTimerTask(this);
-        eventTimer.scheduleAtFixedRate(task, 0,updateFrequency);
+        eventTimer.scheduleAtFixedRate(task, 0,(int)(updateFrequency/speedModifier));
         timerStarted = true;
     }
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
@@ -593,7 +596,13 @@ public class Main extends Application {
         midHBox.getChildren().addAll(gp, eventBox);
         bp.setCenter(midHBox);
         VBox topVBox = new VBox();
+        HBox timeHBox = new HBox();
         timeLabel = new Label();
+        String speeds[] = {"0.25x", "0.5x","0.75x","1x","1.25x","1.5x", "1.75x", "2x"};
+        speedCB = new ComboBox<>(FXCollections
+                .observableArrayList(speeds));
+        speedCB.setOnAction(event -> changePlaybackSpeed());
+        speedCB.setValue(speedCB.getItems().get(3));
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setMajorTickUnit(updateFrequency/1000f);
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
@@ -612,7 +621,9 @@ public class Main extends Application {
         });
         timeSlider.setPadding(new Insets(15, 0, 0, 0));
         timeLabel.setStyle("-fx-text-fill: white");
-        topVBox.getChildren().addAll(timeSlider, timeLabel);
+        timeHBox.setSpacing(15);
+        timeHBox.getChildren().addAll(timeLabel, speedCB);
+        topVBox.getChildren().addAll(timeSlider, timeHBox);
         topHBox.getChildren().addAll(playbackButton, topVBox);
         topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         topHBox.setStyle("-fx-border-color: white; -fx-border-radius: 5;");
@@ -649,7 +660,7 @@ public class Main extends Application {
         if (paused) {
             eventTimer = new Timer();
             TimerTask task = new EventTimerTask(this);
-            eventTimer.schedule(task, 0, updateFrequency);
+            eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));
             Image image = new Image(getClass().getClassLoader().getResource("res/PauseIcon.png").toExternalForm());
             ImageView imgView = new ImageView(image);
             imgView.fitWidthProperty().bind(b.widthProperty());
@@ -658,6 +669,13 @@ public class Main extends Application {
             paused = false;
         }
     }
+
+    private void changePlaybackSpeed(){
+        speedModifier = Float.parseFloat(speedCB.getValue().substring(0, speedCB.getValue().length()-1));
+        eventTimer.cancel();
+        eventTimer = new Timer();
+        TimerTask task = new EventTimerTask(this);
+        eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));    }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
     private float[][] fillDataArray(TableView<InputTable>selectedItems, BufferedReader reader){
