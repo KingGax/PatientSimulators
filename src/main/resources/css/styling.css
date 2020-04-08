@@ -117,12 +117,6 @@
     -fx-font: normal bold 4em 'serif';
 }
 
-.title-gb {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 3em;
-    -fx-font-weight: bold;
-}
-
 .select-file-label {
     -fx-text-fill: #ffffff;
     -fx-font-size: 2.4em;
@@ -132,26 +126,6 @@
     -fx-background-color: red;
     -fx-font: normal bold 2em 'serif';
     -fx-text-fill: #ffffff;
-}
-
-.gauge-background {
-    -fx-background-color: #000000;
-}
-
-.headings-gb-label {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 1em;
-}
-
-.headings-gb {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 2em;
-    -fx-padding: 5px;
-}
-
-.headings-options {
-    -fx-text-fill: #ffffff;
-    -fx-font-size: 2em;
 }
 
 .pop-up-message {

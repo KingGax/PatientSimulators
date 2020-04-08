@@ -1,0 +1,51 @@
+.combo-box-base
+{
+    -fx-background-color: white;
+}
+
+.button-blue-small {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #00CCFF;
+    -fx-border-radius: 10;
+    -fx-font-size: 1.2em;
+    -fx-padding: 5 35 5 35;
+}
+
+.button-green-small {
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-border-color: #66FF00;
+    -fx-border-radius: 10;
+    -fx-font-size: 1.2em;
+}
+
+.gauge-background {
+    -fx-background-color: #000000;
+}
+
+.headings-gb-label {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 1em;
+}
+
+.headings-gb {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 2em;
+    -fx-padding: 5px;
+}
+
+.headings-options {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 2em;
+}
+
+.title-gb {
+    -fx-text-fill: #ffffff;
+    -fx-font-size: 3em;
+    -fx-font-weight: bold;
+}
+
+#background {
+    -fx-background-color: #000000;
+}

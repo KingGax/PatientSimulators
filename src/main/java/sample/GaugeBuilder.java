@@ -12,10 +12,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.TilePane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
@@ -29,6 +26,9 @@ public class GaugeBuilder {
         TilePane testPane = new TilePane();
         BorderPane borderPane = new BorderPane();
         BorderPane editSection = new BorderPane();
+        editSection.setBackground(new Background(new BackgroundFill(Color.BLACK, new CornerRadii(10), Insets.EMPTY)));
+        editSection.setPadding(new Insets(5,15, 0 ,15));
+        editSection.setStyle("-fx-border-color: white; -fx-border-radius: 10;");
         ComboBox<String> selectEditType = new ComboBox<>();
         ComboBox<String> selectGaugeType = new ComboBox<>();
         selectEditType.getItems().addAll("Colours","Other","Tick Marks");
@@ -86,7 +86,7 @@ public class GaugeBuilder {
         } });
         Event.fireEvent(selectEditType,new ActionEvent());//triggers it to show colours by default
         Scene scene = new Scene(borderPane, 960, 800);
-        scene.getStylesheets().add("css/styling.css");
+        scene.getStylesheets().add("css/gaugeBuilder.css");
         return scene;
     }
     private void saveCurrentGauge(String filename){
