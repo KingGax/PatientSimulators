@@ -183,8 +183,8 @@ public class Main extends Application {
         gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
         gauge.setKnobType(Gauge.KnobType.PLAIN);
         //gauge.setMinorTickMarksVisible(false);
-
     }
+
     private void openEventLog()
     {
         String line;
@@ -207,6 +207,7 @@ public class Main extends Application {
             System.out.println(eventLog.get(i).getTime() + " " + eventLog.get(i).getEvent());
         }*/
     }
+
     //Checks at least one header has been selected
     private void tryRunSimulation(Stage stage)
     {
@@ -254,6 +255,7 @@ public class Main extends Application {
         eventTimer.scheduleAtFixedRate(task, 0,(int)(updateFrequency/speedModifier));
         timerStarted = true;
     }
+
     private Gauge buildGauge(Gauge.SkinType type, InputTable data){
         Gauge newGauge = null;
         double maxValue, minValue;
@@ -298,6 +300,7 @@ public class Main extends Application {
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
     }
+
     private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
         if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {//checks there is at least one section
             if (sections[0] == 0 && sections[3] == 0){//no amber section so add just green
@@ -354,12 +357,14 @@ public class Main extends Application {
             newGauge.setSectionsVisible(true);
         }//if no sections, do not add red or any sections
     }
+
     private double[] parseSectionData(InputTable data){
         double[] results = new double[4];
         parseOneSection(results,0,data.getAmber().getText());
         parseOneSection(results,1,data.getGreen().getText());
         return results;
     }
+
     private void parseOneSection(double[]results, int index,String text ){
         String[] textArray = text.split(",");
         if (textArray.length == 2){
@@ -375,6 +380,7 @@ public class Main extends Application {
             results[results.length-1-index] = 0;
         }
     }
+
     //Updates gauges at a regular interval, called by EventTimerTask.run()
     void updateGauges(){
         for (int i = 0; i < gauges.size(); i++) {
@@ -411,6 +417,7 @@ public class Main extends Application {
         Platform.runLater(() -> timeLabel.setText("Time Elapsed: " + (currentStep + mu) * 5 +"s"));
     }
 
+    //Updates event box
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
         while (eventLog.get(eventIndex).getTime() <= currentTime){
@@ -491,6 +498,7 @@ public class Main extends Application {
             tv.getItems().add(new InputTable(item,typePicker,min,max,amber,green));
         }
     }
+
     private TextField newValidatingRangeTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -498,6 +506,7 @@ public class Main extends Application {
         tf.textProperty().setValue(initialValue);
         return tf;
     }
+
     private boolean validateRange(TextField textBox,Boolean oldVal){
         if (oldVal){
             if (textBox.getText().compareTo("") == 0){
@@ -522,6 +531,7 @@ public class Main extends Application {
         }
         return false;
     }
+
     private TextField newValidatingDoubleTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -529,6 +539,7 @@ public class Main extends Application {
         tf.textProperty().setValue(initialValue);
         return tf;
     }
+
     private boolean validateDouble(TextField textBox, boolean oldVal){
         if (oldVal){
             try {
@@ -718,16 +729,21 @@ public class Main extends Application {
     private float dateTimeToFloat(String date){
         float outVal;
         String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d";
-        Pattern p = Pattern.compile(pattern);
-        Matcher m = p.matcher(date);
-        if (!m.find()){
-            return 0;
+        if (!date.matches(pattern)){
+            return -1f;
         }
         else{
             int years = Integer.parseInt(date.substring(0, 4));
+            System.out.println(years);
             int months = Integer.parseInt(date.substring(5, 7));
             int days = Integer.parseInt(date.substring(8, 10));
-            outVal = timeToFloat((24*(days+28*months+365*years))+":00:00")+timeToFloat(date.substring(11,19));
+            float time = timeToFloat(date.substring(11,19));
+            if (time != -1f) {
+                outVal = ((24 * (days + 28 * months + 365 * years)) * 3600f) + time;
+            }
+            else{
+                outVal = -1f;
+            }
             return outVal;
         }
     }
@@ -736,14 +752,15 @@ public class Main extends Application {
     private float timeToFloat(String time){
         float outVal;
         String pattern = "\\d+\\d:\\d\\d:\\d\\d";
-        Pattern p = Pattern.compile(pattern);
-        Matcher m = p.matcher(time);
-        if (!m.find()){ //r̝̮̥͔͎̱̜eg̭̺̰̪e̮̝͕̗̙̗ͅx̨
-            return 0;
+        if (!time.matches(pattern)){// || time.indexOf("-") != -1){ //r̝̮̥͔͎̱̜eg̭̺̰̪e̮̝͕̗̙̗ͅx̨
+            return -1;
         } else {
-            int hours = Integer.parseInt(time.substring(0,2));
-            int minutes = Integer.parseInt(time.substring(3,5));
-            int seconds = Integer.parseInt(time.substring(6,8));
+            int hourLength = time.indexOf(':');
+            int minuteStart = hourLength + 1;
+            int secondStart = minuteStart + 3;
+            int hours = Integer.parseInt(time.substring(0, hourLength));
+            int minutes = Integer.parseInt(time.substring(minuteStart, minuteStart+2));
+            int seconds = Integer.parseInt(time.substring(secondStart, secondStart+2));
             outVal = seconds + 60*(minutes+60*hours);
             return outVal;
         }

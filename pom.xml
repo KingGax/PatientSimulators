@@ -70,7 +70,6 @@
                 <version>1.2.1</version>
                 <configuration>
                     <mainClass>sample.Main</mainClass>
-
                 </configuration>
             </plugin>
         </plugins>
