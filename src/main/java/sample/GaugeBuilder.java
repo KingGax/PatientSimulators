@@ -46,9 +46,10 @@ public class GaugeBuilder {
         Label gaugePickerTitle = new Label("Options");
         gaugePickerTitle.getStyleClass().add("headings-options");
         selectBox.getChildren().addAll(gaugePickerTitle, selectGaugeType,selectEditTypeLabel,selectEditType);
+        selectBox.setPadding(new Insets(0,0,20,0));
         editSection.setTop(selectBox);
         borderPane.setLeft(editSection);
-        borderPane.setPadding(new Insets(0, 20, 0 ,20));
+        borderPane.setPadding(new Insets(0, 0, 0 ,20));
         borderPane.setCenter(gaugeBox);
         HBox footerBox = new HBox(5);
         Label filenameLabel = new Label("Filename:");

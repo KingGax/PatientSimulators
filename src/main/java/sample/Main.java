@@ -126,8 +126,6 @@ public class Main extends Application {
         BorderPane borderPane = new BorderPane();
         borderPane.setCenter(centreBox);
         BorderPane.setMargin(centreBox,new Insets(0,10,10,10));
-        //TilePane testpane = new TilePane();//testpane.getChildren().add(borderPane);
-        //borderPane.setTop(test);
         Scene welcome = new Scene(borderPane, 960, 720);
         welcome.getStylesheets().add("css/styling.css");
         stage.setScene(welcome);
@@ -182,6 +180,7 @@ public class Main extends Application {
         gauge.setLedVisible(true);
         gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
         gauge.setKnobType(Gauge.KnobType.PLAIN);
+
         //gauge.setMinorTickMarksVisible(false);
     }
 
@@ -214,6 +213,7 @@ public class Main extends Application {
         if (!selectedHeaderTitles.getItems().isEmpty())
         {
             stage.setScene(getDashboardScene());
+            stage.setMaximized(true);
         }
         else
         {
@@ -241,11 +241,11 @@ public class Main extends Application {
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             String header = selectedItems.getItems().get(i).headerName;
             Gauge gauge = buildGauge(type,selectedItems.getItems().get(i));
+            gauge.setPrefSize(800,800);
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
-            pane.add(gaugeBox, i%2, i /2);
+            pane.add(gaugeBox,i %3, i/3);
             gauges.add(gauge);
         }
-        pane.setPrefSize(570, 400);
         pane.setPadding(new Insets(20));
         pane.setHgap(15);
         pane.setVgap(15);
@@ -262,7 +262,7 @@ public class Main extends Application {
         int decimals = PureFunctions.getDecimals(data.headerName);
         int tickLabelDecimals;
         tickLabelDecimals = decimals - 1;
-        if (decimals < 0) tickLabelDecimals = 0;
+        if (decimals > 1) tickLabelDecimals = decimals;
         try {
             maxValue = Double.parseDouble(data.getMax().getText());
         }catch(Exception e){
@@ -296,6 +296,7 @@ public class Main extends Application {
             return newGauge;
         }
         newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
+        newGauge.calcAutoScale();
         addSections(sections,newGauge);
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
@@ -578,7 +579,7 @@ public class Main extends Application {
     {
         dataArray = fillDataArray(selectedHeaderTitles, dataReader);
         BorderPane bp = new BorderPane();
-        GridPane gp = new GridPane();
+        GridPane gaugeTiles = new GridPane();
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
@@ -604,7 +605,8 @@ public class Main extends Application {
         imgView.fitHeightProperty().bind(playbackButton.heightProperty());
         playbackButton.setGraphic(imgView);
         playbackButton.setOnAction(e -> playBackHandler(playbackButton));
-        midHBox.getChildren().addAll(gp, eventBox);
+        midHBox.getChildren().addAll(gaugeTiles, eventBox);
+        midHBox.setHgrow(gaugeTiles,Priority.ALWAYS);
         bp.setCenter(midHBox);
         VBox topVBox = new VBox();
         HBox timeHBox = new HBox();
@@ -639,8 +641,8 @@ public class Main extends Application {
         topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         topHBox.setStyle("-fx-border-color: white; -fx-border-radius: 5;");
         bp.setTop(topHBox);
-        initialiseGauges(selectedHeaderTitles, gp);
-        return new Scene(bp, 960, 800);
+        initialiseGauges(selectedHeaderTitles, gaugeTiles);
+        return new Scene(bp, 1920, 1600);
     }
 
     //Handles stopping and starting of playback
@@ -778,6 +780,7 @@ public class Main extends Application {
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File file = fileChooser.showOpenDialog(stage);
+        //File file = new File("C:\\Users\\KingGax\\IdeaProjects\\PatientSimulators\\src\\main\\resources\\2019-10-28_1030_PhysiologicalDataLog.csv");
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
                 if (eventsLog){
