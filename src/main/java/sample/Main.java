@@ -237,13 +237,20 @@ public class Main extends Application {
     //Programmatically creates gauges and stores them in global list, starts timer
     private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
+        int numGauges = selectedItems.getItems().size();
+        int numColumns = 3; //arbitrary guesses atm
+        if (numGauges > 6) numColumns = 4;
+        if (numGauges >=10) numColumns = 5;
+        if (numGauges >=12) numColumns = 6;
+        if (numGauges >= 21) numColumns = 7;
+        if (numGauges >= 28) numColumns = 8;
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             String header = selectedItems.getItems().get(i).headerName;
             Gauge gauge = buildGauge(type,selectedItems.getItems().get(i));
             gauge.setPrefSize(800,800);
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
-            pane.add(gaugeBox,i %3, i/3);
+            pane.add(gaugeBox,i %numColumns, i/numColumns);
             gauges.add(gauge);
         }
         pane.setPadding(new Insets(20));
@@ -592,6 +599,7 @@ public class Main extends Application {
         eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
+        eventBox.setMinWidth(380);
         timeCol.setMinWidth(80);
         eventCol.setMinWidth(300);
         Button playbackButton = new Button();
