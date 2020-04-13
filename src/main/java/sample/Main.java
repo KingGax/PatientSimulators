@@ -36,8 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class Main extends Application {
     private BufferedReader dataReader;
-    private BufferedReader eventReader;
-    private int rowCount;
+    private int rowCount = 0;
     private List<Gauge> gauges;
     private float[][] dataArray; //Ignore this warning, dataArray to be used for gauges
     private ComboBox<String> headerPicker;
@@ -67,7 +66,6 @@ public class Main extends Application {
     public void start(Stage stage) {
         mainStage = stage;
         dataReader = null;
-        eventReader = null;
         popup = new Popup();
         popup.setAutoHide(true);
         //ColorPicker test = new ColorPicker();
@@ -134,7 +132,6 @@ public class Main extends Application {
         simulationButton.setOnAction(e->tryRunSimulation(stage));
         borderPane.setTop(header);
         borderPane.setId("background");
-
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
@@ -180,31 +177,7 @@ public class Main extends Application {
         gauge.setLedVisible(true);
         gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
         gauge.setKnobType(Gauge.KnobType.PLAIN);
-
         //gauge.setMinorTickMarksVisible(false);
-    }
-
-    private void openEventLog()
-    {
-        String line;
-        try{
-            eventLog.clear();
-            line = eventReader.readLine();
-            while (line != null){if (line.compareTo("SCE Time, Message,") == 0) break; line = eventReader.readLine();} //reading to start of data
-            while ((line = eventReader.readLine()) != null) {
-                String[] item = line.split(",");                 //item[] is each row of csv file
-                String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
-                int i =Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
-                eventData p = new eventData(i,item[1]);
-                eventLog.add(p);
-            }
-            eventsSelected = true;
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-        /*for (int i = 0; i < eventLog.size(); i++) {
-            System.out.println(eventLog.get(i).getTime() + " " + eventLog.get(i).getEvent());
-        }*/
     }
 
     //Checks at least one header has been selected
@@ -231,7 +204,6 @@ public class Main extends Application {
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
         popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 30);
-
     }
 
     //Programmatically creates gauges and stores them in global list, starts timer
@@ -474,6 +446,7 @@ public class Main extends Application {
             selectedHeaders.getItems().remove(selectedHeaders.getSelectionModel().getSelectedItem());
         }
     }
+
     //Checks if the header name is already present
     private boolean checkItemPresent(String item, TableView<InputTable> tv){
         for (InputTable i: tv.getItems()) {
@@ -484,11 +457,11 @@ public class Main extends Application {
         }
         return false;
     }
+
     //Attempts to add item to ListView
     private void tryAddItem(String item, TableView<InputTable> tv)
     {
         if (!checkItemPresent(item,tv)&&(item!=null)){
-
             ComboBox<String> typePicker = new ComboBox<>();
             typePicker.getItems().addAll(typeChooserTemplate.getItems());
             typePicker.getSelectionModel().selectFirst();
@@ -524,9 +497,7 @@ public class Main extends Application {
                         showPopup("First value of a range must be smaller than the second");
                         return false;
                     }
-                } catch(Exception e) {
-
-                }
+                } catch(Exception e) {}
             }
             showPopup("Range should be \"Decimal,Decimal\"");
         }
@@ -536,15 +507,15 @@ public class Main extends Application {
     private TextField newValidatingDoubleTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
-        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateDouble(tf,oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
+        tf.focusedProperty().addListener((obs, oldVal, newVal) -> {if(validateDouble(tf.getText(),oldVal)){oldTxt.set(tf.getText());} else{tf.setText(oldTxt.get());}});
         tf.textProperty().setValue(initialValue);
         return tf;
     }
 
-    private boolean validateDouble(TextField textBox, boolean oldVal){
+    private boolean validateDouble(String text, boolean oldVal){
         if (oldVal){
             try {
-                double newV = Double.parseDouble(textBox.getText());
+                double newV = Double.parseDouble(text);
                 return true;
             } catch (NumberFormatException e) {
                 showPopup("Error inputting decimal number");
@@ -553,31 +524,11 @@ public class Main extends Application {
         return false;
     }
 
-    public class eventData {
-        private int time;
-        private String event;
-
-        public eventData(){
-        }
-        public eventData(int time, String event) {
-            this.time = time;
-            this.event = event;
-        }
-
-        public int getTime(){
-            return time;
-        }
-
-        public String getEvent(){
-            return event;
-        }
-
-    }
-
     //Setup for dashboard JavaFX scene
     private Scene getDashboardScene()
     {
-        dataArray = fillDataArray(selectedHeaderTitles, dataReader);
+        String[] selectedItemsArr = headersToStrings(selectedHeaderTitles);
+        dataArray = fillDataArray(selectedItemsArr, dataReader);
         BorderPane bp = new BorderPane();
         GridPane gaugeTiles = new GridPane();
         HBox midHBox = new HBox();
@@ -621,7 +572,7 @@ public class Main extends Application {
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
         timeSlider.setSnapToTicks(true);
         timeSlider.prefWidthProperty().bind(topHBox.widthProperty());
-        timeSlider.setOnMousePressed((MouseEvent event) -> PauseTimer(playbackButton));
+        timeSlider.setOnMousePressed((MouseEvent event) -> pauseTimer(playbackButton));
         timeSlider.setOnMouseReleased(event -> {
             int prevStep = currentStep;
             currentStep = (int) Math.floor(timeSlider.getValue())/5;
@@ -648,15 +599,15 @@ public class Main extends Application {
     //Handles stopping and starting of playback
     private void playBackHandler(Button b){
         if (!paused) {
-            PauseTimer(b);
+            pauseTimer(b);
         }
         else {
-            ResumeTimer(b);
+            resumeTimer(b);
         }
     }
 
     //Pauses timer
-    private void PauseTimer(Button b){
+    private void pauseTimer(Button b){
         if (!paused){
             eventTimer.cancel();
             Image image = new Image(getClass().getClassLoader().getResource("res/PlayIcon.png").toExternalForm());
@@ -669,7 +620,7 @@ public class Main extends Application {
     }
 
     //Resumes timer
-    private void ResumeTimer(Button b){
+    private void resumeTimer(Button b){
         if (paused) {
             eventTimer = new Timer();
             TimerTask task = new EventTimerTask(this);
@@ -688,15 +639,20 @@ public class Main extends Application {
         eventTimer.cancel();
         eventTimer = new Timer();
         TimerTask task = new EventTimerTask(this);
-        eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));    }
+        eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));
+    }
 
-    //Fills data array with values from global file corresponding to headers passed through selectedItems
-    private float[][] fillDataArray(TableView<InputTable>selectedItems, BufferedReader reader){
+    private String[] headersToStrings(TableView<InputTable> selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
             selectedItemsArr[i] = selectedItems.getItems().get(i-1).headerName;
         }
         selectedItemsArr[0] = "PatientTime";
+        return selectedItemsArr;
+    }
+
+    //Fills data array with values from global file corresponding to headers passed through selectedItems
+    private float[][] fillDataArray(String[] selectedItemsArr, BufferedReader reader){
         float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
         int[][] offSetArray = new int [selectedItemsArr.length][2];
         for (int i=0; i < datArray.length+1; i++){
@@ -736,7 +692,6 @@ public class Main extends Application {
         }
         else{
             int years = Integer.parseInt(date.substring(0, 4));
-            System.out.println(years);
             int months = Integer.parseInt(date.substring(5, 7));
             int days = Integer.parseInt(date.substring(8, 10));
             float time = timeToFloat(date.substring(11,19));
@@ -767,16 +722,17 @@ public class Main extends Application {
             return outVal;
         }
     }
+
     private String getFileExtension(String path)
     {
         int i = path.lastIndexOf('.');
         int p = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-
         if (i > p) {
             return path.substring(i+1);
         }
         return "";
     }
+
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File file = fileChooser.showOpenDialog(stage);
@@ -784,12 +740,12 @@ public class Main extends Application {
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
                 if (eventsLog){
-                    eventReader = new BufferedReader(new FileReader(file));
-                    openEventLog();
+                    BufferedReader eventReader = new BufferedReader(new FileReader(file));
+                    eventLog = openEventLog(eventReader);
                 }
                 else {
                     dataReader = new BufferedReader(new FileReader(file));
-                    openData(file);
+                    openData(file, dataReader);
                 }
             } catch (IOException ex){
                 System.out.println("IOException in opening file");
@@ -802,16 +758,8 @@ public class Main extends Application {
             }
         }
     }
-    private void openData(File file){
-        try {
-            dataReader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
-            String commaSep = dataReader.readLine();
-            dataReader.reset();
-            fillComboBoxFromReader(commaSep);
-            selectedHeaderTitles.getItems().clear();
-        } catch (IOException ex) {
-            System.out.println("IOException in printing file");
-        }
+
+    private void countRows(File file){
         try{
             BufferedReader rowReader = new BufferedReader(new FileReader(file));
             rowCount = 0;
@@ -823,6 +771,65 @@ public class Main extends Application {
             System.out.println("IOException in counting rows");
         }
     }
+
+    private void openData(File file, BufferedReader reader){
+        try {
+            reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
+            String commaSep = reader.readLine();
+            reader.reset();
+            fillComboBoxFromReader(commaSep);
+            selectedHeaderTitles.getItems().clear();
+        } catch (IOException ex) {
+            System.out.println("IOException in printing file");
+        }
+        countRows(file);
+    }
+
+    private ArrayList<eventData> openEventLog(BufferedReader eventReader)
+    {
+        ArrayList<eventData> eLog = new ArrayList<>();
+        String line;
+        try{
+            eLog.clear();
+            line = eventReader.readLine();
+            while (line != null){
+                if (line.compareTo("SCE Time, Message,") == 0) break; line = eventReader.readLine();
+            } //reading to start of data
+            while ((line = eventReader.readLine()) != null) {
+                String[] item = line.split(",");                 //item[] is each row of csv file
+                String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
+                int i = Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
+                eventData p = new eventData(i,item[1]);
+                eLog.add(p);
+            }
+            eventsSelected = true;
+        } catch(IOException e) {
+            e.printStackTrace();
+        }
+        return eLog;
+    }
+
+    public class eventData {
+        private int time;
+        private String event;
+
+        public eventData(){
+        }
+        public eventData(int time, String event) {
+            this.time = time;
+            this.event = event;
+        }
+
+        public int getTime(){
+            return time;
+        }
+
+        public String getEvent(){
+            return event;
+        }
+
+    }
+
     //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
