@@ -2,12 +2,13 @@ package sample;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 
+import java.io.Serializable;
+
 public class InputTable {
     String headerName;
     private ComboBox<String> options;
     private TextField min;
     private TextField max;
-    private TextField red;
     private TextField amber;
     private TextField green;
 
@@ -43,12 +44,6 @@ public class InputTable {
     }
     public TextField getMax(){
         return this.max;
-    }
-    public void setRed(TextField red){
-        this.red = red;
-    }
-    public TextField getRed(){
-        return this.red;
     }
     public void setAmber(TextField amber) {
         this.amber = amber;

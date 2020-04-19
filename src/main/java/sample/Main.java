@@ -23,10 +23,7 @@ import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +44,7 @@ public class Main extends Application {
     private Timer eventTimer;
     private boolean timerStarted = false;
     private Slider timeSlider;
-    private ArrayList<eventData> eventLog = new ArrayList<>();
+    private ArrayList<EventData> eventLog = new ArrayList<>();
     private boolean paused = false;
     private boolean eventsSelected = false;
     @FXML
@@ -59,7 +56,8 @@ public class Main extends Application {
     private ComboBox<String> speedCB;
     private int eventIndex = 0;
     private Stage mainStage;
-
+    private CSVData csvData;
+    private String[] headerNames;
     @Override
 
     //Initial scene setup
@@ -86,6 +84,12 @@ public class Main extends Application {
         eventLogSelecter.getStyleClass().add("button-yellow");
         Button simulationButton = new Button("Run Simulation");
         simulationButton.getStyleClass().add("button-green");
+        Button saveSimulationButton = new Button("Save Simulation");
+        saveSimulationButton.getStyleClass().add("button-yellow");
+        Button loadSimulationButton = new Button("Upload Simulation File");
+        loadSimulationButton.getStyleClass().add("button-blue");
+        saveSimulationButton.setOnAction(e -> trySaveSimulation());
+        loadSimulationButton.setOnAction(e -> tryLoadSimulation(fileChooser));
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
         GridPane selectedHeaders = new GridPane();
@@ -106,7 +110,7 @@ public class Main extends Application {
         addHeader.setOnAction(e -> tryAddItem(headerPicker.getValue(),selectedHeaderTitles));
         HBox fileSelectionBox = new HBox(15);
         fileSelectionBox.setAlignment(Pos.CENTER);
-        fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter);
+        fileSelectionBox.getChildren().addAll(fileSelectorButton,eventLogSelecter,loadSimulationButton);
         HBox chooseHeadersBox = new HBox(10);
         VBox inputHeadersBox = new VBox(20);
         inputHeadersBox.setPadding(new Insets(120, 0, 0, 0));
@@ -115,7 +119,10 @@ public class Main extends Application {
         VBox centreBox = new VBox(30);
         chooseHeadersBox.getChildren().addAll(inputHeadersBox, selectedHeaders);
         selectedHeaderTitles.prefWidthProperty().bind(chooseHeadersBox.widthProperty());
-        centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,gaugeButton,simulationButton);
+        HBox extraOptionsBox = new HBox(20);
+        extraOptionsBox.setAlignment(Pos.CENTER);
+        extraOptionsBox.getChildren().addAll(gaugeButton,saveSimulationButton);
+        centreBox.getChildren().addAll(title, selectFileLabel, fileSelectionBox,chooseHeadersBox,extraOptionsBox,simulationButton);
         centreBox.setAlignment(Pos.CENTER);
         HBox header = new HBox(20);
         header.getChildren().addAll(title);
@@ -166,6 +173,69 @@ public class Main extends Application {
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
         stage.show();
     }
+
+    private void tryLoadSimulation(FileChooser fileChooser){
+        try {
+            File workingDirectory = new File(System.getProperty("user.dir"));
+            fileChooser.setInitialDirectory(workingDirectory);
+            File file = fileChooser.showOpenDialog(mainStage);
+            FileInputStream fis = new FileInputStream(file);
+            ObjectInputStream dis = new ObjectInputStream(fis);
+            SimulationParameters sim = (SimulationParameters) dis.readObject();
+            csvData = sim.getCsvData();
+            HeaderParameters[] headerData = sim.getHeaders();
+            eventLog = sim.getEventLog();
+            rowCount = csvData.data.length;
+            updateTablesWithLoadedSimulation(csvData.headers,headerData);
+
+        } catch (Exception ef) {
+            System.out.println("we;re out "+ef);
+
+        }
+
+    }
+    private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
+        headerPicker.getItems().clear();
+        selectedHeaderTitles.getItems().clear();
+        for (String currentItem : allHeaders) {
+            if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
+                headerPicker.getItems().add(currentItem);
+            }
+        }
+        for (HeaderParameters h : headerSettings) {
+                ComboBox<String> typePicker = new ComboBox<>();
+                typePicker.getItems().addAll(typeChooserTemplate.getItems());
+                typePicker.getSelectionModel().select(h.getGaugeType());
+                TextField min = newValidatingDoubleTextField(h.getMin());
+                TextField max = newValidatingDoubleTextField(h.getMax());
+                TextField amber = newValidatingRangeTextField(h.getAmber());
+                TextField green = newValidatingRangeTextField(h.getGreen());
+                selectedHeaderTitles.getItems().add(new InputTable(h.getHeaderName(),typePicker,min,max,amber,green));
+        }
+    }
+    private void trySaveSimulation(){
+        int numGauges = selectedHeaderTitles.getItems().size();
+        HeaderParameters[] headers = new HeaderParameters[numGauges];
+        int count = 0;
+        for (InputTable row: selectedHeaderTitles.getItems() ) {
+            headers[count] = new HeaderParameters(row);
+            count++;
+        }
+        try {
+            FileOutputStream fos = new FileOutputStream("test.sim");
+            ObjectOutputStream dos = new ObjectOutputStream(fos);
+
+            dos.writeObject(new SimulationParameters(headers,csvData,eventLog));
+            System.out.println("file created: " + "yeet");
+            dos.flush();
+            fos.close();
+
+        } catch (Exception ef) {
+            ef.printStackTrace();
+        }
+
+    }
+
 
     private void setDefaultGaugeCustomisation(Gauge gauge){
         gauge.setBackgroundPaint(Color.WHITE);
@@ -401,7 +471,7 @@ public class Main extends Application {
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
         while (eventLog.get(eventIndex).getTime() <= currentTime){
-            eventBox.getItems().add(new eventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
+            eventBox.getItems().add(new EventData(eventLog.get(eventIndex).getTime(),eventLog.get(eventIndex).getEvent()));
             eventIndex++;
         }
     }
@@ -535,17 +605,17 @@ public class Main extends Application {
     private Scene getDashboardScene()
     {
         String[] selectedItemsArr = headersToStrings(selectedHeaderTitles);
-        dataArray = fillDataArray(selectedItemsArr, dataReader);
+        dataArray = extractDataFromCSVData(selectedItemsArr);
         BorderPane bp = new BorderPane();
         GridPane gaugeTiles = new GridPane();
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
         midHBox.getStylesheets().add("css/styling.css");
-        TableColumn<String, eventData> timeCol = new TableColumn<>("Time");
+        TableColumn<String, EventData> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
         timeCol.getStyleClass().add("table-heads");
-        TableColumn<String, eventData> eventCol = new TableColumn<>("Event");
+        TableColumn<String, EventData> eventCol = new TableColumn<>("Event");
         eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
         eventCol.getStyleClass().add("table-heads");
         eventBox.getColumns().add(timeCol);
@@ -691,6 +761,25 @@ public class Main extends Application {
         return datArray;
     }
 
+    //Fills data array with values from global file corresponding to headers passed through selectedItems
+    private float[][] extractDataFromCSVData(String[] selectedItemsArr){
+        /*for (int j = 0; j < csvData.data.length; j++){
+            System.out.println(csvData.headers[j] + ":  " + csvData.data[j][0] + " " + csvData.data[j][1] + " " + csvData.data[j][2]);
+        }*/
+        float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
+        int[][] offSetArray = new int [selectedItemsArr.length][2];
+        for (int j = 0; j < datArray[0].length; j++){
+            offSetArray[j][0] = j;
+            offSetArray[j][1] = Arrays.asList(csvData.headers).indexOf(selectedItemsArr[j]);
+        }
+        for (int i=0; i < datArray.length; i++){
+                for (int j = 0; j < datArray[i].length; j++) {
+                    datArray[i][j] = csvData.data[i][offSetArray[j][1]];
+                }
+        }
+        return datArray;
+    }
+
     //Potentially no longer needed
     private float dateTimeToFloat(String date){
         float outVal;
@@ -743,6 +832,8 @@ public class Main extends Application {
 
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
+        File workingDirectory = new File(System.getProperty("user.dir"));
+        fileChooser.setInitialDirectory(workingDirectory);
         File file = fileChooser.showOpenDialog(stage);
         //File file = new File("C:\\Users\\KingGax\\IdeaProjects\\PatientSimulators\\src\\main\\resources\\2019-10-28_1030_PhysiologicalDataLog.csv");
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
@@ -753,7 +844,10 @@ public class Main extends Application {
                 }
                 else {
                     dataReader = new BufferedReader(new FileReader(file));
-                    openData(file, dataReader);
+                    extractHeaders(file, dataReader);
+                    fillCSVData(file, dataReader);
+                    dataReader.close(); //must be closed and reopened to use later
+                    dataReader = new BufferedReader(new FileReader(file));
                 }
             } catch (IOException ex){
                 System.out.println("IOException in opening file");
@@ -766,7 +860,9 @@ public class Main extends Application {
             }
         }
     }
-
+    private void fillCSVData(File file, BufferedReader dataReader){
+        csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
+    }
     private void countRows(File file){
         try{
             BufferedReader rowReader = new BufferedReader(new FileReader(file));
@@ -780,7 +876,7 @@ public class Main extends Application {
         }
     }
 
-    private void openData(File file, BufferedReader reader){
+    private void extractHeaders(File file, BufferedReader reader){
         try {
             reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
             String commaSep = reader.readLine();
@@ -793,9 +889,9 @@ public class Main extends Application {
         countRows(file);
     }
 
-    private ArrayList<eventData> openEventLog(BufferedReader eventReader)
+    private ArrayList<EventData> openEventLog(BufferedReader eventReader)
     {
-        ArrayList<eventData> eLog = new ArrayList<>();
+        ArrayList<EventData> eLog = new ArrayList<>();
         String line;
         try{
             eLog.clear();
@@ -807,7 +903,7 @@ public class Main extends Application {
                 String[] item = line.split(",");                 //item[] is each row of csv file
                 String[] b = item[0].split(":");                 //split the time into hours minutes and seconds
                 int i = Integer.parseInt(b[0])*60*60 + Integer.parseInt(b[1])*60 + Integer.parseInt(b[2]);   //converting
-                eventData p = new eventData(i,item[1]);
+                EventData p = new EventData(i,item[1]);
                 eLog.add(p);
             }
             eventsSelected = true;
@@ -817,31 +913,12 @@ public class Main extends Application {
         return eLog;
     }
 
-    public class eventData {
-        private int time;
-        private String event;
-
-        public eventData(){
-        }
-        public eventData(int time, String event) {
-            this.time = time;
-            this.event = event;
-        }
-
-        public int getTime(){
-            return time;
-        }
-
-        public String getEvent(){
-            return event;
-        }
-
-    }
 
     //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
         String[] commaSepItemsArr = commaSepItems.split(", ");
+        headerNames = commaSepItemsArr;
         for (String currentItem : commaSepItemsArr) {
             if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
                 headerPicker.getItems().add(currentItem);
