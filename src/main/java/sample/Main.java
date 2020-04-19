@@ -179,14 +179,20 @@ public class Main extends Application {
             File workingDirectory = new File(System.getProperty("user.dir"));
             fileChooser.setInitialDirectory(workingDirectory);
             File file = fileChooser.showOpenDialog(mainStage);
-            FileInputStream fis = new FileInputStream(file);
-            ObjectInputStream dis = new ObjectInputStream(fis);
-            SimulationParameters sim = (SimulationParameters) dis.readObject();
-            csvData = sim.getCsvData();
-            HeaderParameters[] headerData = sim.getHeaders();
-            eventLog = sim.getEventLog();
-            rowCount = csvData.data.length;
-            updateTablesWithLoadedSimulation(csvData.headers,headerData);
+            if (getFileExtension(file.getPath()).compareTo("sim") == 0){
+                FileInputStream fis = new FileInputStream(file);
+                ObjectInputStream dis = new ObjectInputStream(fis);
+                SimulationParameters sim = (SimulationParameters) dis.readObject();
+                csvData = sim.getCsvData();
+                HeaderParameters[] headerData = sim.getHeaders();
+                eventLog = sim.getEventLog();
+                eventsSelected = (eventLog.size() != 0);
+                rowCount = csvData.data.length;
+                updateTablesWithLoadedSimulation(csvData.headers,headerData);
+            } else {
+                showPopup("Please select a .sim file");
+            }
+
 
         } catch (Exception ef) {
             System.out.println("we;re out "+ef);
@@ -212,26 +218,86 @@ public class Main extends Application {
                 TextField green = newValidatingRangeTextField(h.getGreen());
                 selectedHeaderTitles.getItems().add(new InputTable(h.getHeaderName(),typePicker,min,max,amber,green));
         }
+        headerPicker.getSelectionModel().selectFirst();
+    }
+    private boolean validateSimulationInputs(){
+        if (selectedHeaderTitles.getItems().size() < 1){
+            showPopup("Please select at least one header");
+            return false;
+        }
+        for (InputTable row: selectedHeaderTitles.getItems()) {
+            try {
+                double min, max, amber1, amber2, green1, green2;
+                min = Double.parseDouble(row.getMin().getText());
+                max = Double.parseDouble(row.getMax().getText());
+                String[] amberVals = row.getAmber().getText().split(",");
+                amber1 = Double.parseDouble(amberVals[0]);
+                amber2 = Double.parseDouble(amberVals[1]);
+                String[] greenVals = row.getGreen().getText().split(",");
+                green1 = Double.parseDouble(greenVals[0]);
+                green2 = Double.parseDouble(greenVals[1]);
+                if (green1 > green2) {
+                    showPopup("The first number in green on row " + row.getHeaderName() + " should be smaller than the second");
+                    return false;
+                }
+                if (amber1 > amber2){
+                    showPopup("The first number in amber on row " + row.getHeaderName() + " should be smaller than the second");
+                    return false;
+                }
+                if (max < min) {
+                    showPopup("Min is larger than max on row " + row.getHeaderName());
+                    return false;
+                }
+                if (green1 > max || green1 < min || green2 > max || green2 < min){
+                    showPopup("Green ranges do not fall within the gauge range on row " + row.getHeaderName());
+                    return false;
+                }
+                if (amber1 > max || amber1 < min || amber2 > max || amber2 < min){
+                    showPopup("Amber ranges do not fall within the gauge range on row " + row.getHeaderName());
+                    return false;
+                }
+
+            } catch (Exception e) {
+                showPopup("Inputs on row " + row.headerName + " are not of the right type");
+                return false;
+            }
+        }
+        return true;
     }
     private void trySaveSimulation(){
-        int numGauges = selectedHeaderTitles.getItems().size();
-        HeaderParameters[] headers = new HeaderParameters[numGauges];
-        int count = 0;
-        for (InputTable row: selectedHeaderTitles.getItems() ) {
-            headers[count] = new HeaderParameters(row);
-            count++;
-        }
-        try {
-            FileOutputStream fos = new FileOutputStream("test.sim");
-            ObjectOutputStream dos = new ObjectOutputStream(fos);
+        TextInputDialog textInput = new TextInputDialog();
+        textInput.setTitle("Choose filename");
+        textInput.getDialogPane().setContentText("Please choose a filename:");
+        textInput.setHeaderText("Save file");
+        textInput.setGraphic(null);
+        Optional<String> result = textInput.showAndWait();
+        TextField input = textInput.getEditor();
+        if (input.getText() != null && input.getText().length() != 0){
+            if (validateSimulationInputs()){
+                int numGauges = selectedHeaderTitles.getItems().size();
+                HeaderParameters[] headers = new HeaderParameters[numGauges];
+                int count = 0;
+                for (InputTable row: selectedHeaderTitles.getItems() ) {
+                    headers[count] = new HeaderParameters(row);
+                    count++;
+                }
+                try {
+                    FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
+                    ObjectOutputStream dos = new ObjectOutputStream(fos);
 
-            dos.writeObject(new SimulationParameters(headers,csvData,eventLog));
-            System.out.println("file created: " + "yeet");
-            dos.flush();
-            fos.close();
+                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog));
+                    System.out.println("file created: " + "yeet");
+                    dos.flush();
+                    fos.close();
 
-        } catch (Exception ef) {
-            ef.printStackTrace();
+                } catch (Exception ef) {
+                    ef.printStackTrace();
+                }
+
+            }
+
+        } else {
+            showPopup("Please enter a filename");
         }
 
     }
@@ -253,7 +319,7 @@ public class Main extends Application {
     //Checks at least one header has been selected
     private void tryRunSimulation(Stage stage)
     {
-        if (!selectedHeaderTitles.getItems().isEmpty())
+        if (validateSimulationInputs())
         {
             stage.setScene(getDashboardScene());
             stage.setMaximized(true);
@@ -574,7 +640,10 @@ public class Main extends Application {
                         showPopup("First value of a range must be smaller than the second");
                         return false;
                     }
-                } catch(Exception e) {}
+                } catch(Exception e) {
+                    showPopup("Range should be \"Decimal,Decimal\"");
+                    return false;
+                }
             }
             showPopup("Range should be \"Decimal,Decimal\"");
         }
@@ -611,6 +680,7 @@ public class Main extends Application {
         HBox midHBox = new HBox();
         HBox topHBox = new HBox();
         eventBox = new TableView<>();
+        eventBox.setPlaceholder(new Label("No events log selected"));
         midHBox.getStylesheets().add("css/styling.css");
         TableColumn<String, EventData> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
@@ -640,7 +710,7 @@ public class Main extends Application {
         VBox topVBox = new VBox();
         HBox timeHBox = new HBox();
         timeLabel = new Label();
-        String speeds[] = {"0.25x", "0.5x","0.75x","1x","1.25x","1.5x", "1.75x", "2x"};
+        String[] speeds = {"0.25x", "0.5x","0.75x","1x","1.25x","1.5x", "1.75x", "2x"};
         speedCB = new ComboBox<>(FXCollections
                 .observableArrayList(speeds));
         speedCB.setOnAction(event -> changePlaybackSpeed());
@@ -894,7 +964,6 @@ public class Main extends Application {
         ArrayList<EventData> eLog = new ArrayList<>();
         String line;
         try{
-            eLog.clear();
             line = eventReader.readLine();
             while (line != null){
                 if (line.compareTo("SCE Time, Message,") == 0) break; line = eventReader.readLine();
