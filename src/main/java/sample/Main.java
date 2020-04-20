@@ -687,12 +687,12 @@ public class Main extends Application {
         timeCol.getStyleClass().add("table-heads");
         TableColumn<String, EventData> eventCol = new TableColumn<>("Event");
         eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
-        eventCol.getStyleClass().add("table-heads");
+        eventCol.getStyleClass().add("table-heads-left");
         eventBox.getColumns().add(timeCol);
         eventBox.getColumns().add(eventCol);
         eventBox.setMinWidth(380);
         timeCol.setMinWidth(80);
-        eventCol.setMinWidth(300);
+        eventCol.setMinWidth(700);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);

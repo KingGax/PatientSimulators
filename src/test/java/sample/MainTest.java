@@ -210,39 +210,39 @@ public class MainTest {
         }
     }
 
-    @Test
-    public void TestopenEventLog(){
-        sample.Main main = new sample.Main();
-        Method openEventLog = null;
-        try{
-            openEventLog = main.getClass().getDeclaredMethod("openEventLog", BufferedReader.class);
-        } catch (Exception e){}
-        File file1 = new File(getClass().getClassLoader().getResource("testFiles/Events/2019-10-28_SimulationEventsLog.csv").getFile());
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader(file1));
-            ArrayList<Main.eventData> arr = (ArrayList<Main.eventData>) invokeMethod(main, openEventLog, null, reader);
-            assertEquals("SCE was started", arr.get(0).getEvent());
-            assertEquals(0, arr.get(0).getTime());
-            assertEquals("Scenario 'Haemorrhage_REV' started", arr.get(1).getEvent());
-            assertEquals(0, arr.get(1).getTime());
-            assertEquals("SCE was stopped", arr.get(8).getEvent());
-            assertEquals(778, arr.get(8).getTime());
-        } catch (Exception e){
-            System.out.println("Exception encountered during test: "+e);
-        }
-        File file2 = new File(getClass().getClassLoader().getResource("testFiles/Events/TestEvents1.csv").getFile());
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader(file2));
-            ArrayList<Main.eventData> arr = (ArrayList<Main.eventData>) invokeMethod(main, openEventLog, null, reader);
-            assertEquals("Test1", arr.get(0).getEvent());
-            assertEquals(0, arr.get(0).getTime());
-            assertEquals("Test2", arr.get(1).getEvent());
-            assertEquals(0, arr.get(1).getTime());
-            assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", arr.get(2).getEvent());
-            assertEquals(72, arr.get(2).getTime());
-        } catch (Exception e){
-            System.out.println("Exception encountered during test: "+e);
-        }
-    }
+//    @Test
+//    public void TestopenEventLog(){
+//        sample.Main main = new sample.Main();
+//        Method openEventLog = null;
+//        try{
+//            openEventLog = main.getClass().getDeclaredMethod("openEventLog", BufferedReader.class);
+//        } catch (Exception e){}
+//        File file1 = new File(getClass().getClassLoader().getResource("testFiles/Events/2019-10-28_SimulationEventsLog.csv").getFile());
+//        try{
+//            BufferedReader reader = new BufferedReader(new FileReader(file1));
+//            ArrayList<Main.eventData> arr = (ArrayList<Main.eventData>) invokeMethod(main, openEventLog, null, reader);
+//            assertEquals("SCE was started", arr.get(0).getEvent());
+//            assertEquals(0, arr.get(0).getTime());
+//            assertEquals("Scenario 'Haemorrhage_REV' started", arr.get(1).getEvent());
+//            assertEquals(0, arr.get(1).getTime());
+//            assertEquals("SCE was stopped", arr.get(8).getEvent());
+//            assertEquals(778, arr.get(8).getTime());
+//        } catch (Exception e){
+//            System.out.println("Exception encountered during test: "+e);
+//        }
+//        File file2 = new File(getClass().getClassLoader().getResource("testFiles/Events/TestEvents1.csv").getFile());
+//        try{
+//            BufferedReader reader = new BufferedReader(new FileReader(file2));
+//            ArrayList<Main.eventData> arr = (ArrayList<Main.eventData>) invokeMethod(main, openEventLog, null, reader);
+//            assertEquals("Test1", arr.get(0).getEvent());
+//            assertEquals(0, arr.get(0).getTime());
+//            assertEquals("Test2", arr.get(1).getEvent());
+//            assertEquals(0, arr.get(1).getTime());
+//            assertEquals("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", arr.get(2).getEvent());
+//            assertEquals(72, arr.get(2).getTime());
+//        } catch (Exception e){
+//            System.out.println("Exception encountered during test: "+e);
+//        }
+//    }
 
 }

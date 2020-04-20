@@ -101,7 +101,26 @@
     -fx-font-size: 1.2em;
 }
 
-.table-heads {
+.table-heads{
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-alignment: center;
+}
+
+.table-heads-left{
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-alignment: left;
+}
+
+.table-heads-left .label{
+    -fx-background-color: #000000;
+    -fx-text-fill: #ffffff;
+    -fx-alignment: left;
+    -fx-padding: 0 0 0 20;
+}
+
+.table-heads .label{
     -fx-background-color: #000000;
     -fx-text-fill: #ffffff;
     -fx-alignment: center;
