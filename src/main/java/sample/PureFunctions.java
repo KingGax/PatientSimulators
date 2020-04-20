@@ -45,6 +45,25 @@ class PureFunctions {
         }
     }
 
+    public static String needleTypeToString(Gauge.NeedleType n) {
+        switch (n) {
+            case BIG:
+                return "Big";
+            case FAT:
+                return "Fat";
+            case STANDARD:
+                return "Standard";
+            case SCIENTIFIC:
+                return "Scientific";
+            case AVIONIC:
+                return "Avionic";
+            case VARIOMETER:
+                return "Variometer";
+            default:
+                return null;
+        }
+    }
+
     static String getGreenRange(String val){
         switch (val) {
             case "HR":

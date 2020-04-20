@@ -16,6 +16,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -91,8 +93,19 @@ public class GaugeBuilder {
         return scene;
     }
     private void saveCurrentGauge(String filename){
-        //TODO do
-        throw new IllegalArgumentException("implement me");
+        try {
+            FileOutputStream fos = new FileOutputStream(filename + ".gauge");
+            ObjectOutputStream dos = new ObjectOutputStream(fos);
+            SGauge s = new SGauge();
+            s.setGauge(currentGauge);
+            dos.writeObject(s);
+            System.out.println("file created: " + filename);
+            dos.flush();
+            fos.close();
+
+        } catch (Exception ef) {
+            ef.printStackTrace();
+        }
     }
     private VBox getTickMarkBox(){
         VBox tickBox = new VBox(10);
