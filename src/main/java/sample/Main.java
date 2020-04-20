@@ -142,7 +142,7 @@ public class Main extends Application {
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
-        simulationButton.setOnAction(e->tryRunSimulation(stage));
+        simulationButton.setOnAction(e->tryRunSimulation(stage,welcome));
         borderPane.setTop(header);
         borderPane.setId("background");
         TableColumn<InputTable, String> headerName = new TableColumn<>();
@@ -186,7 +186,7 @@ public class Main extends Application {
             if (getFileExtension(file.getPath()).compareTo("gauge") == 0){
                 typeChooserTemplate.getItems().add(file.getPath());
                 for (InputTable item:selectedHeaderTitles.getItems() ) {
-                    item.getOptions().getItems().add(file.getName());
+                    item.getOptions().getItems().add(file.getName().split("\\.")[0]);
                 }
                 loadInGauge(file);
             } else {
@@ -200,7 +200,7 @@ public class Main extends Application {
             FileInputStream fis = new FileInputStream(file.getPath());
             ObjectInputStream dis = new ObjectInputStream(fis);
             SGauge gauge = (SGauge) dis.readObject();
-            loadedGaugeNames.add(file.getName());
+            loadedGaugeNames.add(file.getName().split("\\.")[0]);
             loadedGaugeParameters.add(gauge);
         } catch (Exception e) {
 
@@ -351,11 +351,11 @@ public class Main extends Application {
     }
 
     //Checks at least one header has been selected
-    private void tryRunSimulation(Stage stage)
+    private void tryRunSimulation(Stage stage,Scene welcome)
     {
         if (validateSimulationInputs())
         {
-            stage.setScene(getDashboardScene());
+            stage.setScene(getDashboardScene(welcome));
             stage.setMaximized(true);
         }
         else
@@ -428,6 +428,7 @@ public class Main extends Application {
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
+            newGauge.setAveragingPeriod(100);
             newGauge.calcAutoScale();
             return newGauge;
         } catch (Exception ef) {
@@ -522,7 +523,6 @@ public class Main extends Application {
         double[] sections = parseSectionData(data);
         GaugeBuilder builder = GaugeBuilder.create();
         if (type == Gauge.SkinType.SIMPLE_SECTION){
-
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setValueColor(Color.WHITE);
@@ -535,6 +535,7 @@ public class Main extends Application {
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
+            newGauge.setAveragingPeriod(100);
         }
         if (newGauge != null){
             addSections(sections,newGauge);
@@ -802,7 +803,7 @@ public class Main extends Application {
     }
 
     //Setup for dashboard JavaFX scene
-    private Scene getDashboardScene()
+    private Scene getDashboardScene(Scene welcome)
     {
         String[] selectedItemsArr = headersToStrings(selectedHeaderTitles);
         dataArray = extractDataFromCSVData(selectedItemsArr);
@@ -829,6 +830,8 @@ public class Main extends Application {
         playbackButton.setMaxWidth(48f);
         playbackButton.setMinHeight(48f);
         playbackButton.setMaxHeight(48f);
+        Button backButton = new Button("Back");
+        backButton.setOnAction(e -> mainStage.setScene(welcome));
         Image image = new Image(getClass().getClassLoader().getResource("res/PauseIcon.png").toExternalForm());
         ImageView imgView = new ImageView(image);
         imgView.fitWidthProperty().bind(playbackButton.widthProperty());
@@ -867,7 +870,7 @@ public class Main extends Application {
         timeHBox.setSpacing(15);
         timeHBox.getChildren().addAll(timeLabel, speedCB);
         topVBox.getChildren().addAll(timeSlider, timeHBox);
-        topHBox.getChildren().addAll(playbackButton, topVBox);
+        topHBox.getChildren().addAll(backButton,playbackButton, topVBox);
         topHBox.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         topHBox.setStyle("-fx-border-color: white; -fx-border-radius: 5;");
         bp.setTop(topHBox);
