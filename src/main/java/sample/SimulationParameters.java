@@ -10,10 +10,14 @@ public class SimulationParameters implements Serializable {
     private HeaderParameters[] headers;
     private  CSVData csvData;
     private ArrayList<EventData> eventLog;
-    public SimulationParameters(HeaderParameters[] h, CSVData data,ArrayList<EventData> events) {
+    private ArrayList<SGauge> customGauges;
+    private ArrayList<String> customNames;
+    public SimulationParameters(HeaderParameters[] h, CSVData data,ArrayList<EventData> events,ArrayList<SGauge> _customGauges,ArrayList<String> _customNames) {
         headers = h;
         csvData = data;
         eventLog = events;
+        customGauges = _customGauges;
+        customNames = _customNames;
     }
     public CSVData getCsvData() {
         return csvData;
@@ -24,5 +28,8 @@ public class SimulationParameters implements Serializable {
     public ArrayList<EventData> getEventLog() {
         return eventLog;
     }
+    public ArrayList<String> getCustomNames() { return customNames; }
+    public ArrayList<SGauge> getCustomGauges() { return customGauges; }
+
 }
 

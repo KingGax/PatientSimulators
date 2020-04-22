@@ -87,15 +87,15 @@ public class Main extends Application {
         Label selectFileLabel = new Label("Please select either a Data File or an Event Log:");
         selectFileLabel.getStyleClass().add("select-file-label");
         selectFileLabel.setFont(Font.font("fantasy"));
-        Button fileSelectorButton = new Button("Upload Data File");
+        Button fileSelectorButton = new Button("Load Data File");
         fileSelectorButton.getStyleClass().add("button-blue");
-        Button eventLogSelecter = new Button("Upload Event Log");
+        Button eventLogSelecter = new Button("Load Event Log");
         eventLogSelecter.getStyleClass().add("button-yellow");
         Button simulationButton = new Button("Run Simulation");
         simulationButton.getStyleClass().add("button-green");
         Button saveSimulationButton = new Button("Save Simulation");
         saveSimulationButton.getStyleClass().add("button-yellow");
-        Button loadSimulationButton = new Button("Upload Simulation File");
+        Button loadSimulationButton = new Button("Load Simulation File");
         loadSimulationButton.getStyleClass().add("button-blue");
         Button customGaugeButton = new Button("Add Custom Gauge");
         customGaugeButton.setOnAction(e -> addCustomGaugeOption(fileChooser,stage));
@@ -227,6 +227,8 @@ public class Main extends Application {
                 HeaderParameters[] headerData = sim.getHeaders();
                 eventLog = sim.getEventLog();
                 eventsSelected = (eventLog.size() != 0);
+                loadedGaugeNames = sim.getCustomNames();
+                loadedGaugeParameters = sim.getCustomGauges();
                 rowCount = csvData.data.length;
                 updateTablesWithLoadedSimulation(csvData.headers,headerData);
             } else {
@@ -243,6 +245,9 @@ public class Main extends Application {
     private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
         headerPicker.getItems().clear();
         selectedHeaderTitles.getItems().clear();
+        for (String customGaugeName:loadedGaugeNames ) {
+            typeChooserTemplate.getItems().add(customGaugeName);
+        }
         for (String currentItem : allHeaders) {
             if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
                 headerPicker.getItems().add(currentItem);
@@ -324,9 +329,8 @@ public class Main extends Application {
                 try {
                     FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
                     ObjectOutputStream dos = new ObjectOutputStream(fos);
-
-                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog));
-                    System.out.println("file created: " + "yeet");
+                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog,loadedGaugeParameters,loadedGaugeNames));
+                    System.out.println("file created: " + result.get());
                     dos.flush();
                     fos.close();
 
@@ -541,7 +545,7 @@ public class Main extends Application {
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
-            newGauge.setAveragingPeriod(100);
+            setupLineGraph(newGauge,data.headerName);
         }
         if (newGauge != null){
             addSections(sections,newGauge);
@@ -553,6 +557,24 @@ public class Main extends Application {
         addSections(sections,newGauge);
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
+    }
+
+    private void setupLineGraph(Gauge newGauge,String headerName){
+        int numPoints = 100;
+        newGauge.setAveragingPeriod(numPoints);
+        double firstPoint = csvData.data[0][getNameIndex(headerName,csvData.headers)];
+        System.out.println(firstPoint);
+        newGauge.setMinValue(firstPoint);
+        newGauge.setMinMeasuredValue(firstPoint);
+    }
+
+    private int getNameIndex(String name, String[] headers){
+        for (int i = 0; i < headers.length; i++) {
+            if (headers[i].compareTo(name) == 0){
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
@@ -1089,6 +1111,10 @@ public class Main extends Application {
     }
     private void fillCSVData(File file, BufferedReader dataReader){
         csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
+        System.out.println(csvData.data.length + " " + csvData.data[0].length);
+        for (int i = 0; i < csvData.headers.length; i++) {
+            System.out.println(csvData.headers[i] + " " + csvData.data[0][i] +" "+ csvData.data[0][i]);
+        }
     }
     private void countRows(File file){
         try{
