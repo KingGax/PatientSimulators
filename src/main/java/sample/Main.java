@@ -6,6 +6,9 @@ import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.TickLabelLocation;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
@@ -21,10 +24,13 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
+import javafx.util.Callback;
+import jdk.jfr.Event;
 
 import java.io.*;
 import java.util.*;
@@ -432,7 +438,7 @@ public class Main extends Application {
             newGauge.calcAutoScale();
             return newGauge;
         } catch (Exception ef) {
-            System.out.println("we;re out "+ef);
+            System.out.println(ef);
             return buildGauge(Gauge.SkinType.MODERN,data);
         }
     }
@@ -814,17 +820,34 @@ public class Main extends Application {
         eventBox = new TableView<>();
         eventBox.setPlaceholder(new Label("No events log selected"));
         midHBox.getStylesheets().add("css/styling.css");
-        TableColumn<String, EventData> timeCol = new TableColumn<>("Time");
+        TableColumn<EventData, String> timeCol = new TableColumn<>("Time");
         timeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
         timeCol.getStyleClass().add("table-heads");
-        TableColumn<String, EventData> eventCol = new TableColumn<>("Event");
-        eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
+        TableColumn<EventData, String> eventCol = new TableColumn<>("Event");
+        //eventCol.setCellValueFactory(param -> new ReadOnlyObjectWrapper<String>(param.getValue().getEvent()));
+        eventCol.setCellValueFactory(new PropertyValueFactory<EventData,String>("event"));
         eventCol.getStyleClass().add("table-heads-left");
-        eventBox.getColumns().add(timeCol);
-        eventBox.getColumns().add(eventCol);
         eventBox.setMinWidth(380);
         timeCol.setMinWidth(80);
-        eventCol.setMinWidth(700);
+        eventCol.setMinWidth(300);
+        eventCol.setCellValueFactory(new PropertyValueFactory<>("event"));
+        eventCol.setCellFactory(param -> new TableCell<>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (item == null || empty) {
+                    setGraphic(null);
+                } else {
+                    Text text = new Text(item);
+                    text.getStyleClass().add("table-heads-left");
+                    text.setWrappingWidth(eventCol.getWidth());
+                    this.setWrapText(true);
+                    setGraphic(text);
+                }
+            }
+        });
+        eventBox.getColumns().add(timeCol);
+        eventBox.getColumns().add(eventCol);
         Button playbackButton = new Button();
         playbackButton.setMinWidth(48f);
         playbackButton.setMaxWidth(48f);

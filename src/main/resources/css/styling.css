@@ -109,14 +109,14 @@
 
 .table-heads-left{
     -fx-background-color: #000000;
-    -fx-text-fill: #ffffff;
-    -fx-alignment: left;
+    -fx-fill: #ffffff;
+    -fx-alignment: center-left;
 }
 
 .table-heads-left .label{
     -fx-background-color: #000000;
     -fx-text-fill: #ffffff;
-    -fx-alignment: left;
+    -fx-alignment: center-left;
     -fx-padding: 0 0 0 20;
 }
 
@@ -124,6 +124,9 @@
     -fx-background-color: #000000;
     -fx-text-fill: #ffffff;
     -fx-alignment: center;
+}
+.table-row-cell {
+    -fx-cell-size: 40px;
 }
 
 .column-header .label {
