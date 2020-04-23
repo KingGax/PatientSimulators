@@ -574,9 +574,7 @@ public class Main extends Application {
         newGauge.setValue(firstPoint);
         newGauge.setAveragingEnabled(true);
         newGauge.setAveragingPeriod(numPoints);
-        //newGauge.setSmoothing(false);
-        //newGauge.setAveragingEnabled(false);
-
+        newGauge.setTitle(headerName);
     }
 
     private int getNameIndex(String name, String[] headers){
@@ -888,7 +886,7 @@ public class Main extends Application {
         playbackButton.setMinHeight(48f);
         playbackButton.setMaxHeight(48f);
         Button backButton = new Button("Back");
-        backButton.setOnAction(e -> {eventTimer.cancel();mainStage.setScene(welcome);});
+        backButton.setOnAction(e -> {eventTimer.cancel();currentStep = 0;mu = 0;eventIndex = 0;mainStage.setScene(welcome);});
         Image image = new Image(getClass().getClassLoader().getResource("res/PauseIcon.png").toExternalForm());
         ImageView imgView = new ImageView(image);
         imgView.fitWidthProperty().bind(playbackButton.widthProperty());
@@ -975,11 +973,14 @@ public class Main extends Application {
 
     private void changePlaybackSpeed(){
         speedModifier = Float.parseFloat(speedCB.getValue().substring(0, speedCB.getValue().length()-1));
-        eventTimer.cancel();
-        eventTimer = new Timer();
-        TimerTask task = new EventTimerTask(this);
-        eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));
+        if (!paused){
+            eventTimer.cancel();
+            eventTimer = new Timer();
+            TimerTask task = new EventTimerTask(this);
+            eventTimer.schedule(task, 0, (int)(updateFrequency/speedModifier));
+        }
     }
+
 
     private String[] headersToStrings(TableView<InputTable> selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
