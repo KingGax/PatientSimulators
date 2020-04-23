@@ -366,6 +366,15 @@ public class Main extends Application {
         if (validateSimulationInputs())
         {
             stage.setScene(getDashboardScene(welcome));
+            for (Gauge gauge : gauges){
+                if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.4
+                    double firstValue = gauge.getCurrentValue();
+                        for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
+                            gauge.setValue(firstValue);
+                            gauge.setValue(firstValue * 0.99999);
+                        }
+                }
+            }
             stage.setMaximized(true);
         }
         else
@@ -438,8 +447,7 @@ public class Main extends Application {
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
-            newGauge.setAveragingPeriod(100);
-            newGauge.calcAutoScale();
+            setupLineGraph(newGauge,data.getHeaderName());
             return newGauge;
         } catch (Exception ef) {
             System.out.println(ef);
@@ -541,11 +549,12 @@ public class Main extends Application {
             newGauge.setBarBackgroundColor(Color.GRAY);
             newGauge.setAnimated(true);
         } else if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).minValue(minValue).maxValue(maxValue).unit(PureFunctions.getUnit(data.headerName)).autoScale(true).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
             setupLineGraph(newGauge,data.headerName);
+            return newGauge;
         }
         if (newGauge != null){
             addSections(sections,newGauge);
@@ -560,12 +569,14 @@ public class Main extends Application {
     }
 
     private void setupLineGraph(Gauge newGauge,String headerName){
-        int numPoints = 100;
-        newGauge.setAveragingPeriod(numPoints);
+        int numPoints = 150;
         double firstPoint = csvData.data[0][getNameIndex(headerName,csvData.headers)];
-        System.out.println(firstPoint);
-        newGauge.setMinValue(firstPoint);
-        newGauge.setMinMeasuredValue(firstPoint);
+        newGauge.setValue(firstPoint);
+        newGauge.setAveragingEnabled(true);
+        newGauge.setAveragingPeriod(numPoints);
+        //newGauge.setSmoothing(false);
+        //newGauge.setAveragingEnabled(false);
+
     }
 
     private int getNameIndex(String name, String[] headers){
@@ -665,6 +676,7 @@ public class Main extends Application {
             if (currentStep < dataArray.length - 1) {
                 nextVal = dataArray[currentStep + 1][i + 1];
                 gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
+                System.out.println(gaugeVal);
             } else {
                 gaugeVal = currentVal;
                 eventTimer.cancel();
@@ -876,7 +888,7 @@ public class Main extends Application {
         playbackButton.setMinHeight(48f);
         playbackButton.setMaxHeight(48f);
         Button backButton = new Button("Back");
-        backButton.setOnAction(e -> mainStage.setScene(welcome));
+        backButton.setOnAction(e -> {eventTimer.cancel();mainStage.setScene(welcome);});
         Image image = new Image(getClass().getClassLoader().getResource("res/PauseIcon.png").toExternalForm());
         ImageView imgView = new ImageView(image);
         imgView.fitWidthProperty().bind(playbackButton.widthProperty());
