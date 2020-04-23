@@ -357,6 +357,7 @@ public class Main extends Application {
         gauge.setBorderPaint(Color.BLACK);
         gauge.setLedVisible(true);
         gauge.setLedBlinking(true);
+        gauge.setLedOn(true);
         gauge.setLedColor(Color.GREEN);
         gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
         gauge.setKnobType(Gauge.KnobType.PLAIN);
@@ -442,13 +443,14 @@ public class Main extends Application {
         try {
             minValue = Integer.parseInt(data.getMin().getText());
         }catch(Exception e){
-            minValue = 0;
+            minValue = PureFunctions.getMinValue(data.headerName);
         }
         try {
             Gauge customisations = loadedGaugeParameters.get(loadedGaugeNames.indexOf(data.getOptions().getValue())).getGauge();
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
+            newGauge.setLedOn(true);
             newGauge.calcAutoScale();
             setupLineGraph(newGauge,data.getHeaderName());
             return newGauge;
@@ -684,7 +686,16 @@ public class Main extends Application {
             }
             try {
                 final int x = i;
-                Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                if (gauges.get(x).getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){
+                    if (gaugeVal == gauges.get(x).getCurrentValue()){
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal*1.00000000001));
+                    } else {
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                    }
+                } else {
+                    Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                }
+
                 Platform.runLater(() -> updateBlinkingLight(gauges.get(x)));
             } catch (NullPointerException e){
                 System.out.println("Data value at indices " + currentStep + ", " + i+1 + "appears to be null.");
