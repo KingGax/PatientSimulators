@@ -15,6 +15,8 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.stage.Popup;
+import javafx.stage.Stage;
 
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
@@ -23,8 +25,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class GaugeBuilder {
     private Gauge currentGauge;
+    private Popup popup;
+    private Stage mainStage;
     public Scene getGaugeBuilderScene(Scene defaultScene)
     {
+        mainStage = (Stage)defaultScene.getWindow();
         TilePane testPane = new TilePane();
         BorderPane borderPane = new BorderPane();
         BorderPane editSection = new BorderPane();
@@ -54,6 +59,8 @@ public class GaugeBuilder {
         borderPane.setPadding(new Insets(0, 0, 0 ,20));
         borderPane.setCenter(gaugeBox);
         HBox footerBox = new HBox(5);
+        popup = new Popup();
+        popup.setAutoHide(true);
         Label filenameLabel = new Label("Filename:");
         filenameLabel.getStyleClass().add("headings-gb");
         footerBox.setAlignment(Pos.CENTER);
@@ -63,7 +70,7 @@ public class GaugeBuilder {
         saveGaugeButton.getStyleClass().add("button-green-small");
         Button backButton = new Button("Back");
         backButton.getStyleClass().add("button-blue-small");
-        backButton.setOnAction(e->((javafx.stage.Stage)backButton.getScene().getWindow()).setScene(defaultScene));
+        backButton.setOnAction(e->mainStage.setScene(defaultScene));
         footerBox.getChildren().addAll(filenameLabel,gaugeNameTextbox,saveGaugeButton, backButton);
         saveGaugeButton.setOnAction(e->saveCurrentGauge(gaugeNameTextbox.getText()));
         Label header = new Label("Build Gauges");
@@ -93,20 +100,34 @@ public class GaugeBuilder {
         return scene;
     }
     private void saveCurrentGauge(String filename){
-        try {
-            FileOutputStream fos = new FileOutputStream(filename + ".gauge");
-            ObjectOutputStream dos = new ObjectOutputStream(fos);
-            SGauge s = new SGauge();
-            s.setGauge(currentGauge);
-            dos.writeObject(s);
-            System.out.println("file created: " + filename);
-            dos.flush();
-            fos.close();
-
-        } catch (Exception ef) {
-            ef.printStackTrace();
+        if (filename.compareTo("") != 0){
+            try {
+                FileOutputStream fos = new FileOutputStream(filename + ".gauge");
+                ObjectOutputStream dos = new ObjectOutputStream(fos);
+                SGauge s = new SGauge();
+                s.setGauge(currentGauge);
+                dos.writeObject(s);
+                System.out.println("file created: " + filename);
+                dos.flush();
+                fos.close();
+                showPopup("Gauge Saved!");
+            } catch (Exception ef) {
+                ef.printStackTrace();
+            }
         }
     }
+    //Displays popup with given message
+    private void showPopup(String message) {
+        Label popupLabel = new Label(message);
+        popupLabel.getStyleClass().add("pop-up-accept");
+        popupLabel.setMinWidth(960); // set size of label
+        popupLabel.setMinHeight(50);
+        popupLabel.setAlignment(Pos.CENTER);
+        popup.getContent().clear();
+        popup.getContent().add(popupLabel);// add the label
+        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 30);
+    }
+
     private VBox getTickMarkBox(){
         VBox tickBox = new VBox(10);
 

@@ -49,3 +49,8 @@
 #background {
     -fx-background-color: #000000;
 }
+.pop-up-accept {
+    -fx-background-color: #26ff00;
+    -fx-font: normal bold 2em 'serif';
+    -fx-text-fill: #000000;
+}

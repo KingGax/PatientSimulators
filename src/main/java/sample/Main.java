@@ -10,6 +10,7 @@ import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
@@ -355,6 +356,8 @@ public class Main extends Application {
         gauge.setBorderWidth(0.4);
         gauge.setBorderPaint(Color.BLACK);
         gauge.setLedVisible(true);
+        gauge.setLedBlinking(true);
+        gauge.setLedColor(Color.GREEN);
         gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
         gauge.setKnobType(Gauge.KnobType.PLAIN);
         //gauge.setMinorTickMarksVisible(false);
@@ -430,7 +433,6 @@ public class Main extends Application {
 
     private Gauge buildCustomGauge(InputTable data){
         Gauge newGauge;
-        String filename = data.getOptions().getValue();
         double maxValue, minValue;
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
@@ -447,6 +449,7 @@ public class Main extends Application {
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
+            newGauge.calcAutoScale();
             setupLineGraph(newGauge,data.getHeaderName());
             return newGauge;
         } catch (Exception ef) {
@@ -674,7 +677,6 @@ public class Main extends Application {
             if (currentStep < dataArray.length - 1) {
                 nextVal = dataArray[currentStep + 1][i + 1];
                 gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
-                System.out.println(gaugeVal);
             } else {
                 gaugeVal = currentVal;
                 eventTimer.cancel();
@@ -683,6 +685,7 @@ public class Main extends Application {
             try {
                 final int x = i;
                 Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                Platform.runLater(() -> updateBlinkingLight(gauges.get(x)));
             } catch (NullPointerException e){
                 System.out.println("Data value at indices " + currentStep + ", " + i+1 + "appears to be null.");
             }
@@ -696,6 +699,17 @@ public class Main extends Application {
         updateTimeLabel();
         if (eventsSelected) updateEventBox();
 
+    }
+
+    private void updateBlinkingLight(Gauge gauge){
+        for (Section section :gauge.getSections()) {
+            if (gauge.getCurrentValue() >= section.getStart() && gauge.getCurrentValue() <= section.getStop()){
+                if (gauge.getLedColor() != section.getColor()){
+                    gauge.setLedColor(section.getColor());
+                }
+                break;
+            }
+        }
     }
 
     //Updates time label in FX thread
