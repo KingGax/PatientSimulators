@@ -68,7 +68,6 @@
     </dependencies>
 
     <build>
-        <pluginManagement>
             <plugins>
                 <!--<plugin>
                     <groupId>org.openjfx</groupId>
@@ -100,15 +99,8 @@
                         </execution>
                     </executions>
                 </plugin>!-->
+
                 <!--<plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>exec-maven-plugin</artifactId>
-                    <version>1.2.1</version>
-                    <configuration>
-                        <mainClass>sample.Main</mainClass>
-                    </configuration>
-                </plugin>
-                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <configuration>
@@ -178,6 +170,14 @@
                     </configuration>
                 </plugin>!-->
                 <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>1.2.1</version>
+                    <configuration>
+                        <mainClass>sample.SuperMain</mainClass>
+                    </configuration>
+                </plugin>
+                <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>3.1.0</version>
@@ -191,6 +191,10 @@
                         </archive>
                     </configuration>
                 </plugin>
+
+            </plugins>
+        <pluginManagement>
+            <plugins>
                 <plugin>
                     <artifactId>maven-shade-plugin</artifactId>
                     <version>3.2.1</version>
