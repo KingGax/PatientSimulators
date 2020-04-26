@@ -120,12 +120,12 @@ public class GaugeBuilder {
     private void showPopup(String message) {
         Label popupLabel = new Label(message);
         popupLabel.getStyleClass().add("pop-up-accept");
-        popupLabel.setMinWidth(960); // set size of label
+        popupLabel.setMinWidth(mainStage.getScene().getWidth()); // set size of label
         popupLabel.setMinHeight(50);
         popupLabel.setAlignment(Pos.CENTER);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 30);
+        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 8, mainStage.getScene().getWindow().getY() + 30);
     }
 
     private VBox getTickMarkBox(){

@@ -380,6 +380,8 @@ public class Main extends Application {
                 }
             }
             stage.setMaximized(true);
+            paused = false;
+            speedModifier = 1;
         }
         else
         {
@@ -391,12 +393,12 @@ public class Main extends Application {
     private void showPopup(String message) {
         Label popupLabel = new Label(message);
         popupLabel.getStyleClass().add("pop-up-message");
-        popupLabel.setMinWidth(960); // set size of label
+        popupLabel.setMinWidth(mainStage.getScene().getWidth()); // set size of label
         popupLabel.setMinHeight(50);
         popupLabel.setAlignment(Pos.CENTER);
         popup.getContent().clear();
         popup.getContent().add(popupLabel);// add the label
-        popup.show(mainStage, mainStage.getScene().getWindow().getX() + 5, mainStage.getScene().getWindow().getY() + 30);
+        popup.show(mainStage, mainStage.getX() + 8, mainStage.getY() + 30);
     }
 
     //Programmatically creates gauges and stores them in global list, starts timer
@@ -417,6 +419,9 @@ public class Main extends Application {
             } else {
                 gauge = buildCustomGauge(selectedItems.getItems().get(i));
             }
+            double[] sections = parseSectionData(selectedItems.getItems().get(i));
+            addSections(sections,gauge);
+            gauge.calcAutoScale();
             gauge.setPrefSize(800,800);
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox,i %numColumns, i/numColumns);
@@ -543,7 +548,6 @@ public class Main extends Application {
         }catch(Exception e){
             minValue = PureFunctions.getMaxValue(data.headerName);
         }
-        double[] sections = parseSectionData(data);
         GaugeBuilder builder = GaugeBuilder.create();
         if (type == Gauge.SkinType.SIMPLE_SECTION){
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
@@ -561,14 +565,7 @@ public class Main extends Application {
             setupLineGraph(newGauge,data.headerName);
             return newGauge;
         }
-        if (newGauge != null){
-            addSections(sections,newGauge);
-            newGauge.calcAutoScale();
-            return newGauge;
-        }
         newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
-        newGauge.calcAutoScale();
-        addSections(sections,newGauge);
         setDefaultGaugeCustomisation(newGauge);
         return newGauge;
     }

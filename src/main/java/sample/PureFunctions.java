@@ -106,7 +106,7 @@ class PureFunctions {
             case "PAO2":
                 return "100,600";
             default:
-                return "";
+                return "0,0";
         }
     }
 
@@ -153,7 +153,7 @@ class PureFunctions {
             case "PAO2":
                 return "90,760";
             default:
-                return "";
+                return "0,0";
         }
     }
 
@@ -198,7 +198,7 @@ class PureFunctions {
             case "PAO2":
                 return "0,800";
             default:
-                return "";
+                return "0,0";
         }
     }
 
