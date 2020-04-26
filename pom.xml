@@ -110,13 +110,13 @@
                             </manifest>
                         </archive>
                     </configuration>
-                </plugin>
+                </plugin>!-->
                 <plugin>
                     <artifactId>maven-assembly-plugin</artifactId>
                     <configuration>
                         <archive>
                             <manifest>
-                                <mainClass>sample.Main</mainClass>
+                                <mainClass>sample.SuperMain</mainClass>
                             </manifest>
                         </archive>
                         <descriptorRefs>
@@ -132,7 +132,7 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>!-->
+                </plugin>
                   <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
