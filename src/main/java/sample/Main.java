@@ -184,6 +184,7 @@ public class Main extends Application {
         greenSection.getStyleClass().add("table-heads");
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
+        stage.getIcons().add(new Image("res/Patient_Simulator_Logo.png"));
         stage.show();
     }
 
