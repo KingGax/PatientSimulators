@@ -421,8 +421,8 @@ public class Main extends Application {
                 gauge = buildCustomGauge(selectedItems.getItems().get(i));
             }
             double[] sections = parseSectionData(selectedItems.getItems().get(i));
-            addSections(sections,gauge);
             gauge.calcAutoScale();
+            addSections(sections,gauge);
             gauge.setPrefSize(800,800);
             VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
             pane.add(gaugeBox,i %numColumns, i/numColumns);
