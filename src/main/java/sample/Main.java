@@ -25,6 +25,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
@@ -189,6 +190,9 @@ public class Main extends Application {
     }
 
     private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){
+        fileChooser.setTitle("Select Custom Gauge");
+        File workingDirectory = new File(System.getProperty("user.dir"));
+        fileChooser.setInitialDirectory(workingDirectory);
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             if (getFileExtension(file.getPath()).compareTo("gauge") == 0){
@@ -218,6 +222,7 @@ public class Main extends Application {
 
     private void tryLoadSimulation(FileChooser fileChooser){
         try {
+            fileChooser.setTitle("Select Simulation");
             File workingDirectory = new File(System.getProperty("user.dir"));
             fileChooser.setInitialDirectory(workingDirectory);
             File file = fileChooser.showOpenDialog(mainStage);
@@ -759,6 +764,7 @@ public class Main extends Application {
 
         Label label = new Label(TEXT);
         label.setTextFill(COLOR);
+        label.setFont(Font.font(label.getFont().getFamily(), FontWeight.BOLD,34));
         label.setAlignment(Pos.CENTER);
         label.setPadding(new Insets(0, 0, 10, 0));
 
@@ -1015,13 +1021,18 @@ public class Main extends Application {
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
-    private float[][] fillDataArray(String[] selectedItemsArr, BufferedReader reader){
-        float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
-        int[][] offSetArray = new int [selectedItemsArr.length][2];
+    private float[][] fillDataArray(String[] selectedItemsArr, BufferedReader reader){//removes all spaces
+        String[] selectedItemsCopy = new String[selectedItemsArr.length];
+        for (int i = 0; i < selectedItemsArr.length; i++) {
+            selectedItemsCopy[i] = selectedItemsArr[i].replace(" ","");
+        }
+        float[][] datArray = new float[rowCount-1][selectedItemsCopy.length];
+        int[][] offSetArray = new int [selectedItemsCopy.length][2];
         for (int i=0; i < datArray.length+1; i++){
             String[] tempData = new String[1];
             try{
-                tempData = reader.readLine().split(", ");
+                tempData = reader.readLine().replace(" ","").split(",");
+
             }
             catch (IOException ex){
                 System.out.println("IOException in reading from file.");
@@ -1029,7 +1040,7 @@ public class Main extends Application {
             if (i == 0){
                 for (int j = 0; j < datArray[0].length; j++){
                     offSetArray[j][0] = j;
-                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsArr[j]);
+                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsCopy[j]);
                 }
             } else {
                 for (int j = 0; j < datArray[i-1].length; j++) {
@@ -1068,7 +1079,7 @@ public class Main extends Application {
     //Potentially no longer needed
     private float dateTimeToFloat(String date){
         float outVal;
-        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d";
+        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d\\d\\d:\\d\\d:\\d\\d";
         if (!date.matches(pattern)){
             return -1f;
         }
@@ -1076,7 +1087,7 @@ public class Main extends Application {
             int years = Integer.parseInt(date.substring(0, 4));
             int months = Integer.parseInt(date.substring(5, 7));
             int days = Integer.parseInt(date.substring(8, 10));
-            float time = timeToFloat(date.substring(11,19));
+            float time = timeToFloat(date.substring(10,18));
             if (time != -1f) {
                 outVal = ((24 * (days + 28 * months + 365 * years)) * 3600f) + time;
             }
@@ -1118,9 +1129,13 @@ public class Main extends Application {
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File workingDirectory = new File(System.getProperty("user.dir"));
+        if (eventsLog){
+            fileChooser.setTitle("Select Events Log");
+        } else {
+            fileChooser.setTitle("Select Data Log");
+        }
         fileChooser.setInitialDirectory(workingDirectory);
         File file = fileChooser.showOpenDialog(stage);
-        //File file = new File("C:\\Users\\KingGax\\IdeaProjects\\PatientSimulators\\src\\main\\resources\\2019-10-28_1030_PhysiologicalDataLog.csv");
         if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
             try {
                 if (eventsLog){
@@ -1147,10 +1162,6 @@ public class Main extends Application {
     }
     private void fillCSVData(File file, BufferedReader dataReader){
         csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
-        System.out.println(csvData.data.length + " " + csvData.data[0].length);
-        for (int i = 0; i < csvData.headers.length; i++) {
-            System.out.println(csvData.headers[i] + " " + csvData.data[0][i] +" "+ csvData.data[0][i]);
-        }
     }
     private void countRows(File file){
         try{
@@ -1171,7 +1182,6 @@ public class Main extends Application {
             String commaSep = reader.readLine();
             reader.reset();
             fillComboBoxFromReader(commaSep);
-            selectedHeaderTitles.getItems().clear();
         } catch (IOException ex) {
             System.out.println("IOException in printing file");
         }

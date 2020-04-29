@@ -87,25 +87,25 @@ public class MainTest {
         try{
             method = main.getClass().getDeclaredMethod("dateTimeToFloat", String.class);
         } catch (Exception e){}
-        float ext1 = (float) invokeMethod(main, method, -1f,"0000-00-00 00:00:00");
+        float ext1 = (float) invokeMethod(main, method, -1f,"0000-00-0000:00:00");
         assertEquals(0f, ext1, 0.0001f);
-        float ext2 = (float) invokeMethod(main, method, -1f,"2000-00-00 00:00:00");
+        float ext2 = (float) invokeMethod(main, method, -1f,"2000-00-0000:00:00");
         assertEquals(63072000000f, ext2, 0.0001f);
-        float ext3 = (float) invokeMethod(main, method, -1f,"200-00-00 00:00:00");
+        float ext3 = (float) invokeMethod(main, method, -1f,"200-00-0000:00:00");
         assertEquals(-1f, ext3, 0.0001f);
-        float ext4 = (float) invokeMethod(main, method, -1f,"200a-00-00 00:00:00");
+        float ext4 = (float) invokeMethod(main, method, -1f,"200a-00-0000:00:00");
         assertEquals(-1f, ext4, 0.0001f);
-        float ext5 = (float) invokeMethod(main, method, -1f,"-2000-00-00 00:00:00");
+        float ext5 = (float) invokeMethod(main, method, -1f,"-2000-00-0000:00:00");
         assertEquals(-1f, ext5, 0.0001f);
-        float ext6 = (float) invokeMethod(main, method, -1f,"2000-0a-00 00:00:00");
+        float ext6 = (float) invokeMethod(main, method, -1f,"2000-0a-0000:00:00");
         assertEquals(-1f, ext6, 0.0001f);
-        float ext7 = (float) invokeMethod(main, method, -1f,"2000-00-a0 00:00:00");
+        float ext7 = (float) invokeMethod(main, method, -1f,"2000-00-a000:00:00");
         assertEquals(-1f, ext7, 0.0001f);
-        float ext8 = (float) invokeMethod(main, method, -1f,"2000-00-00 0a:00:00");
+        float ext8 = (float) invokeMethod(main, method, -1f,"2000-00-000a:00:00");
         assertEquals(-1f, ext8, 0.0001f);
-        float ext9 = (float) invokeMethod(main, method, -1f,"2000-00-00 -00:00:00");
+        float ext9 = (float) invokeMethod(main, method, -1f,"2000-00-00-00:00:00");
         assertEquals(-1f, ext9, 0.0001f);
-        float ext10 = (float) invokeMethod(main, method, -1f,"0000-00-01 00:00:01");
+        float ext10 = (float) invokeMethod(main, method, -1f,"0000-00-0100:00:01");
         assertEquals(86401f, ext10, 0.0001f);
     }
 
