@@ -54,3 +54,8 @@
     -fx-font: normal bold 2em 'serif';
     -fx-text-fill: #000000;
 }
+.pop-up-error {
+    -fx-background-color: #ff000f;
+    -fx-font: normal bold 2em 'serif';
+    -fx-text-fill: #000000;
+}

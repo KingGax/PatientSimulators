@@ -102,7 +102,7 @@ public class GaugeBuilder {
     private void saveCurrentGauge(String filename){
         if (filename.compareTo("") != 0){
             if (filename.contains("/") || filename.contains("\\") || filename.contains(".")){
-                showPopup("Name cannot include '/', '\\' or '.'");
+                showPopup("Name cannot include '/', '\\' or '.'",true);
             } else {
                 try {
                     FileOutputStream fos = new FileOutputStream(filename + ".gauge");
@@ -110,20 +110,25 @@ public class GaugeBuilder {
                     SGauge s = new SGauge();
                     s.setGauge(currentGauge);
                     dos.writeObject(s);
-                    System.out.println("file created: " + filename);
                     dos.flush();
                     fos.close();
-                    showPopup("Gauge Saved!");
+                    showPopup("Gauge Saved!",false);
                 } catch (Exception ef) {
                     ef.printStackTrace();
                 }
             }
+        } else {
+            showPopup("Please choose a filename",true);
         }
     }
     //Displays popup with given message
-    private void showPopup(String message) {
+    private void showPopup(String message,boolean error) {
         Label popupLabel = new Label(message);
-        popupLabel.getStyleClass().add("pop-up-accept");
+        if (error){
+            popupLabel.getStyleClass().add("pop-up-error");
+        } else {
+            popupLabel.getStyleClass().add("pop-up-accept");
+        }
         popupLabel.setMinWidth(mainStage.getScene().getWidth()); // set size of label
         popupLabel.setMinHeight(50);
         popupLabel.setAlignment(Pos.CENTER);
