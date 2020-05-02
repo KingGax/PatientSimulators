@@ -101,18 +101,22 @@ public class GaugeBuilder {
     }
     private void saveCurrentGauge(String filename){
         if (filename.compareTo("") != 0){
-            try {
-                FileOutputStream fos = new FileOutputStream(filename + ".gauge");
-                ObjectOutputStream dos = new ObjectOutputStream(fos);
-                SGauge s = new SGauge();
-                s.setGauge(currentGauge);
-                dos.writeObject(s);
-                System.out.println("file created: " + filename);
-                dos.flush();
-                fos.close();
-                showPopup("Gauge Saved!");
-            } catch (Exception ef) {
-                ef.printStackTrace();
+            if (filename.contains("/") || filename.contains("\\") || filename.contains(".")){
+                showPopup("Name cannot include '/', '\\' or '.'");
+            } else {
+                try {
+                    FileOutputStream fos = new FileOutputStream(filename + ".gauge");
+                    ObjectOutputStream dos = new ObjectOutputStream(fos);
+                    SGauge s = new SGauge();
+                    s.setGauge(currentGauge);
+                    dos.writeObject(s);
+                    System.out.println("file created: " + filename);
+                    dos.flush();
+                    fos.close();
+                    showPopup("Gauge Saved!");
+                } catch (Exception ef) {
+                    ef.printStackTrace();
+                }
             }
         }
     }
@@ -308,7 +312,7 @@ public class GaugeBuilder {
         Label knobTypeLabel = new Label("Knob Type");
         knobTypeLabel.getStyleClass().add("headings-gb-label");
         knobTypeVBox.getChildren().addAll(knobTypeLabel,knobTypeComboBox);
-        knobTypeComboBox.setOnAction(e->currentGauge.setKnobType(PureFunctions.translateStringToknobType(knobTypeComboBox.getValue())));
+        knobTypeComboBox.setOnAction(e->currentGauge.setKnobType(PureFunctions.translateStringToKnobType(knobTypeComboBox.getValue())));
 
         HBox ledVisibleHBox = new HBox(5);
         CheckBox ledVisibleCheckBox = new CheckBox();

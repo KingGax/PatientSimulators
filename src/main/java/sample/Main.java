@@ -1,7 +1,6 @@
 package sample;
 
 import eu.hansolo.medusa.Gauge;
-import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.TickLabelLocation;
 import javafx.application.Application;
@@ -69,12 +68,14 @@ public class Main extends Application {
     private Stage mainStage;
     private CSVData csvData;
     private String[] headerNames;
-    private ArrayList<String> loadedGaugeNames = new ArrayList<String>();
-    private ArrayList<SGauge> loadedGaugeParameters = new ArrayList<SGauge>();
+    //private ArrayList<String> loadedGaugeNames = new ArrayList<String>();
+    //private ArrayList<SGauge> loadedGaugeParameters = new ArrayList<SGauge>();
+    private GaugeManager gaugeManager;
     @Override
 
     //Initial scene setup
     public void start(Stage stage) {
+        gaugeManager = new GaugeManager(new ArrayList<String>(), new ArrayList<SGauge>());
         mainStage = stage;
         dataReader = null;
         popup = new Popup();
@@ -196,28 +197,17 @@ public class Main extends Application {
         File file = fileChooser.showOpenDialog(stage);
         if (file != null) {
             if (getFileExtension(file.getPath()).compareTo("gauge") == 0){
-                typeChooserTemplate.getItems().add(file.getPath());
-                for (InputTable item:selectedHeaderTitles.getItems() ) {
-                    item.getOptions().getItems().add(file.getName().split("\\.")[0]);
+                typeChooserTemplate.getItems().add(file.getName().split("\\.")[0]);
+                if (selectedHeaderTitles.getItems().size()>0){
+                    for (InputTable item:selectedHeaderTitles.getItems() ) {
+                        item.getOptions().getItems().add(file.getName().split("\\.")[0]);
+                    }
                 }
-                loadInGauge(file);
+                gaugeManager.loadInGauge(file);
             } else {
                 showPopup("Please select a .gauge file");
             }
         }
-    }
-
-    private void loadInGauge(File file) {
-        try {
-            FileInputStream fis = new FileInputStream(file.getPath());
-            ObjectInputStream dis = new ObjectInputStream(fis);
-            SGauge gauge = (SGauge) dis.readObject();
-            loadedGaugeNames.add(file.getName().split("\\.")[0]);
-            loadedGaugeParameters.add(gauge);
-        } catch (Exception e) {
-
-        }
-
     }
 
     private void tryLoadSimulation(FileChooser fileChooser){
@@ -230,12 +220,12 @@ public class Main extends Application {
                 FileInputStream fis = new FileInputStream(file);
                 ObjectInputStream dis = new ObjectInputStream(fis);
                 SimulationParameters sim = (SimulationParameters) dis.readObject();
-                csvData = sim.getCsvData();
+                csvData = sim.getCSVData();
                 HeaderParameters[] headerData = sim.getHeaders();
                 eventLog = sim.getEventLog();
                 eventsSelected = (eventLog.size() != 0);
-                loadedGaugeNames = sim.getCustomNames();
-                loadedGaugeParameters = sim.getCustomGauges();
+                gaugeManager.setGaugeNames(sim.getCustomNames());
+                gaugeManager.setGaugeParameters(sim.getCustomGauges());
                 rowCount = csvData.data.length;
                 updateTablesWithLoadedSimulation(csvData.headers,headerData);
             } else {
@@ -252,7 +242,7 @@ public class Main extends Application {
     private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
         headerPicker.getItems().clear();
         selectedHeaderTitles.getItems().clear();
-        for (String customGaugeName:loadedGaugeNames ) {
+        for (String customGaugeName:gaugeManager.getGaugeNames() ) {
             typeChooserTemplate.getItems().add(customGaugeName);
         }
         for (String currentItem : allHeaders) {
@@ -336,7 +326,7 @@ public class Main extends Application {
                 try {
                     FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
                     ObjectOutputStream dos = new ObjectOutputStream(fos);
-                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog,loadedGaugeParameters,loadedGaugeNames));
+                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog, gaugeManager.getGaugeParameters(),gaugeManager.getGaugeNames()));
                     System.out.println("file created: " + result.get());
                     dos.flush();
                     fos.close();
@@ -354,21 +344,7 @@ public class Main extends Application {
     }
 
 
-    private void setDefaultGaugeCustomisation(Gauge gauge){
-        gauge.setBackgroundPaint(Color.WHITE);
-        gauge.setMajorTickMarkLengthFactor(0.6);
-        gauge.setMediumTickMarkLengthFactor(0.6);
-        gauge.setMinorTickMarkLengthFactor(0.5);
-        gauge.setBorderWidth(0.4);
-        gauge.setBorderPaint(Color.BLACK);
-        gauge.setLedVisible(true);
-        gauge.setLedBlinking(true);
-        gauge.setLedOn(true);
-        gauge.setLedColor(Color.GREEN);
-        gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
-        gauge.setKnobType(Gauge.KnobType.PLAIN);
-        //gauge.setMinorTickMarksVisible(false);
-    }
+
 
     //Checks at least one header has been selected
     private void tryRunSimulation(Stage stage,Scene welcome)
@@ -421,9 +397,9 @@ public class Main extends Application {
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             Gauge gauge;
             if (type != null){
-                gauge = buildGauge(type,selectedItems.getItems().get(i));
+                gauge = gaugeManager.buildGauge(type,selectedItems.getItems().get(i), csvData);
             } else {
-                gauge = buildCustomGauge(selectedItems.getItems().get(i));
+                gauge = gaugeManager.buildCustomGauge(selectedItems.getItems().get(i), csvData);
             }
             double[] sections = parseSectionData(selectedItems.getItems().get(i));
             gauge.calcAutoScale();
@@ -443,156 +419,16 @@ public class Main extends Application {
         timerStarted = true;
     }
 
-    private Gauge buildCustomGauge(InputTable data){
-        Gauge newGauge;
-        double maxValue, minValue;
-        try {
-            maxValue = Integer.parseInt(data.getMax().getText());
-        }catch(Exception e){
-            maxValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        try {
-            minValue = Integer.parseInt(data.getMin().getText());
-        }catch(Exception e){
-            minValue = PureFunctions.getMinValue(data.headerName);
-        }
-        try {
-            Gauge customisations = loadedGaugeParameters.get(loadedGaugeNames.indexOf(data.getOptions().getValue())).getGauge();
-            GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
-            updateCurrentGaugeSkin(newGauge,customisations);
-            newGauge.setLedOn(true);
-            newGauge.calcAutoScale();
-            setupLineGraph(newGauge,data.getHeaderName());
-            return newGauge;
-        } catch (Exception ef) {
-            System.out.println(ef);
-            return buildGauge(Gauge.SkinType.MODERN,data);
-        }
-    }
-
-    private void updateCurrentGaugeSkin(Gauge currentGauge, Gauge oldGauge ){
-        Color needleColour = oldGauge.getNeedleColor();
-        Paint backgroundPaint = oldGauge.getBackgroundPaint();
-        Paint borderColour = oldGauge.getBorderPaint();
-        double borderWidth = oldGauge.getBorderWidth();
-        Color titleColour = oldGauge.getTitleColor();
-        Color unitColour = oldGauge.getUnitColor();
-        Color majorTickColour = oldGauge.getMajorTickMarkColor();
-        Color minorTickColour = oldGauge.getMinorTickMarkColor();
-        Color mediumTickColour = oldGauge.getMediumTickMarkColor();
-        Color valueColour = oldGauge.getValueColor();
-        Color knobColour = oldGauge.getKnobColor();
-        Color tickLabelColour = oldGauge.getTickLabelColor();
-        Gauge.NeedleType needleType = oldGauge.getNeedleType();
-        Gauge.NeedleShape needleShape = oldGauge.getNeedleShape();
-        Gauge.KnobType knobType = oldGauge.getKnobType();
-        boolean ledVisible = oldGauge.isLedVisible();
-        boolean ledBlinking = oldGauge.isLedBlinking();
-        boolean minorTicksVisible = oldGauge.getMinorTickMarksVisible();
-        boolean mediumTicksVisible = oldGauge.getMediumTickMarksVisible();
-        boolean majorTicksVisible = oldGauge.getMajorTickMarksVisible();
-        Color modernTickColour = oldGauge.getTickMarkColor();
-        Gauge.LedType ledType = oldGauge.getLedType();
-        Color ledColour = oldGauge.getLedColor();
-        double minorTickWidth = oldGauge.getMinorTickMarkWidthFactor();
-        double minorTickLength = oldGauge.getMinorTickMarkLengthFactor();
-        double mediumTickWidth = oldGauge.getMediumTickMarkWidthFactor();
-        double mediumTickLength = oldGauge.getMediumTickMarkLengthFactor();
-        double majorTickWidth = oldGauge.getMajorTickMarkWidthFactor();
-        double majorTickLength = oldGauge.getMajorTickMarkLengthFactor();
-        boolean tickLabelsVisible = oldGauge.getTickLabelsVisible();
-        TickLabelLocation tickLabelLocation = oldGauge.getTickLabelLocation();
-        currentGauge.setNeedleColor(needleColour);
-        currentGauge.setBackgroundPaint(backgroundPaint);
-        currentGauge.setBorderPaint(borderColour);
-        currentGauge.setBorderWidth(borderWidth);
-        currentGauge.setTitleColor(titleColour);
-        currentGauge.setUnitColor(unitColour);
-        currentGauge.setMajorTickMarkColor(majorTickColour);
-        currentGauge.setMinorTickMarkColor(minorTickColour);
-        currentGauge.setMediumTickMarkColor(mediumTickColour);
-        currentGauge.setKnobColor(knobColour);
-        currentGauge.setValueColor(valueColour);
-        currentGauge.setTickLabelColor(tickLabelColour);
-        currentGauge.setNeedleType(needleType);
-        currentGauge.setNeedleShape(needleShape);
-        currentGauge.setKnobType(knobType);
-        currentGauge.setLedVisible(ledVisible);
-        currentGauge.setLedType(ledType);
-        currentGauge.setLedBlinking(ledBlinking);
-        currentGauge.setLedColor(ledColour);
-        currentGauge.setMajorTickMarksVisible(majorTicksVisible);
-        currentGauge.setMinorTickMarksVisible(minorTicksVisible);
-        currentGauge.setMediumTickMarksVisible(mediumTicksVisible);
-        currentGauge.setTickMarkColor(modernTickColour);
-        currentGauge.setMediumTickMarkLengthFactor(mediumTickLength);
-        currentGauge.setMediumTickMarkWidthFactor(mediumTickWidth);
-        currentGauge.setMajorTickMarkLengthFactor(majorTickLength);
-        currentGauge.setMajorTickMarkWidthFactor(majorTickWidth);
-        currentGauge.setMinorTickMarkWidthFactor(minorTickWidth);
-        currentGauge.setMinorTickMarkLengthFactor(minorTickLength);
-        currentGauge.setTickLabelsVisible(tickLabelsVisible);
-        currentGauge.setTickLabelLocation(tickLabelLocation);
-    }
 
 
-    private Gauge buildGauge(Gauge.SkinType type, InputTable data){
-        Gauge newGauge = null;
-        double maxValue, minValue;
-        int decimals = PureFunctions.getDecimals(data.headerName);
-        int tickLabelDecimals;
-        tickLabelDecimals = decimals - 1;
-        if (decimals > 1) tickLabelDecimals = decimals;
-        try {
-            maxValue = Double.parseDouble(data.getMax().getText());
-        }catch(Exception e){
-            maxValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        try {
-            minValue = Double.parseDouble(data.getMin().getText());
-        }catch(Exception e){
-            minValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        GaugeBuilder builder = GaugeBuilder.create();
-        if (type == Gauge.SkinType.SIMPLE_SECTION){
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
-            newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setValueColor(Color.WHITE);
-            newGauge.setTitleColor(Color.WHITE);
-            newGauge.setUnitColor(Color.WHITE);
-            newGauge.setBarBackgroundColor(Color.GRAY);
-            newGauge.setAnimated(true);
-        } else if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).minValue(minValue).maxValue(maxValue).unit(PureFunctions.getUnit(data.headerName)).autoScale(true).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
-            newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.WHITE);
-            newGauge.setAnimated(true);
-            setupLineGraph(newGauge,data.headerName);
-            return newGauge;
-        }
-        newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
-        setDefaultGaugeCustomisation(newGauge);
-        return newGauge;
-    }
 
-    private void setupLineGraph(Gauge newGauge,String headerName){
-        int numPoints = 150;
-        double firstPoint = csvData.data[0][getNameIndex(headerName,csvData.headers)];
-        newGauge.setValue(firstPoint);
-        newGauge.setAveragingEnabled(true);
-        newGauge.setAveragingPeriod(numPoints);
-        newGauge.setTitle(headerName);
-    }
 
-    private int getNameIndex(String name, String[] headers){
-        for (int i = 0; i < headers.length; i++) {
-            if (headers[i].compareTo(name) == 0){
-                return i;
-            }
-        }
-        return -1;
-    }
+
+
+
+
+
+
 
     private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
         if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {//checks there is at least one section

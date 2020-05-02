@@ -373,7 +373,7 @@ class PureFunctions {
         }
     }
 
-    public static Gauge.KnobType translateStringToknobType(String str) {
+    public static Gauge.KnobType translateStringToKnobType(String str) {
         switch (str){
             case "Flat":
                 return Gauge.KnobType.FLAT;
