@@ -263,6 +263,10 @@ public class Main extends Application {
         headerPicker.getSelectionModel().selectFirst();
     }
     private boolean validateSimulationInputs(){
+        if (csvData.data == null){
+            showPopup("Please load in a valid data array");
+            return false;
+        }
         if (selectedHeaderTitles.getItems().size() < 1){
             showPopup("Please select at least one header");
             return false;
@@ -363,11 +367,6 @@ public class Main extends Application {
             }
             stage.setMaximized(true);
             paused = false;
-            speedModifier = 1;
-        }
-        else
-        {
-            showPopup("Choose at least one header to display");
         }
     }
 
@@ -764,11 +763,12 @@ public class Main extends Application {
         VBox topVBox = new VBox();
         HBox timeHBox = new HBox();
         timeLabel = new Label();
-        String[] speeds = {"0.25x", "0.5x","0.75x","1x","1.25x","1.5x", "1.75x", "2x"};
+        String[] speeds = {"0.25x", "0.5x","1x","1.5x","2x","3x","4x","5x","6x","8x"};
         speedCB = new ComboBox<>(FXCollections
                 .observableArrayList(speeds));
         speedCB.setOnAction(event -> changePlaybackSpeed());
-        speedCB.setValue(speedCB.getItems().get(3));
+        speedCB.setValue("1x");
+        speedModifier = 1;
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setMajorTickUnit(updateFrequency/1000f);
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
@@ -864,32 +864,38 @@ public class Main extends Application {
         }
         float[][] datArray = new float[rowCount-1][selectedItemsCopy.length];
         int[][] offSetArray = new int [selectedItemsCopy.length][2];
-        for (int i=0; i < datArray.length+1; i++){
-            String[] tempData = new String[1];
-            try{
-                tempData = reader.readLine().replace(" ","").split(",");
-
-            }
-            catch (IOException ex){
-                System.out.println("IOException in reading from file.");
-            }
-            if (i == 0){
-                for (int j = 0; j < datArray[0].length; j++){
-                    offSetArray[j][0] = j;
-                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsCopy[j]);
+        int i = 0; int j = 0;//for error handling
+        try {
+            for (i=0; i < datArray.length+1; i++){
+                String[] tempData = new String[1];
+                try{
+                    tempData = reader.readLine().replace(" ","").split(",");
                 }
-            } else {
-                for (int j = 0; j < datArray[i-1].length; j++) {
-                    if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
-                        datArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
-                    } else if (offSetArray[j][1] == 2) { //Date
-                        datArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
-                    } else { //Regular float
-                        datArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                catch (IOException ex){
+                    showPopup("Error reading csv file");
+                }
+                if (i == 0){
+                    for (j = 0; j < datArray[0].length; j++){
+                        offSetArray[j][0] = j;
+                        offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsCopy[j]);
+                    }
+                } else {
+                    for (j = 0; j < datArray[i-1].length; j++) {
+                        if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
+                            datArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
+                        } else if (offSetArray[j][1] == 2) { //Date
+                            datArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
+                        } else { //Regular float
+                            datArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                        }
                     }
                 }
             }
+        } catch (Exception e){
+            showPopup("Error parsing csv, invalid input on row " + (i+1) + " of " + selectedItemsArr[j]);
+            return null;
         }
+
         return datArray;
     }
 
