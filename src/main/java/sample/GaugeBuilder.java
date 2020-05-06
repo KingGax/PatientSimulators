@@ -18,8 +18,10 @@ import javafx.scene.paint.Paint;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -99,11 +101,40 @@ public class GaugeBuilder {
         scene.getStylesheets().add("css/gaugeBuilder.css");
         return scene;
     }
+
+    private boolean checkFilenameValid(String filename){
+        for (String i: PureFunctions.UserForbiddenCharacters) {
+            if (filename.contains(i)){
+                showPopup("Filename cannot contain " + i,true);
+                return false;
+            }
+        }
+        File newFile = new File(filename);
+        try {
+            newFile.createNewFile();
+            if (newFile.exists()){
+                newFile.delete();
+                return true;
+            } else {
+                showPopup(filename + " is a forbidden filename",true);
+                return  false;
+            }
+        } catch (Exception e) {
+            for (String i: PureFunctions.WindowsForbiddenCharacters) {
+                if (filename.contains(i)){
+                    showPopup("Filename cannot contain " + i,true);
+                    return false;
+                }
+            }
+            showPopup(filename + " is a forbidden filename",true);
+            return false;
+        }
+    }
+
+
     private void saveCurrentGauge(String filename){
         if (filename.compareTo("") != 0){
-            if (filename.contains("/") || filename.contains("\\") || filename.contains(".")){
-                showPopup("Name cannot include '/', '\\' or '.'",true);
-            } else {
+            if (checkFilenameValid(filename)){
                 try {
                     FileOutputStream fos = new FileOutputStream(filename + ".gauge");
                     ObjectOutputStream dos = new ObjectOutputStream(fos);
@@ -117,7 +148,7 @@ public class GaugeBuilder {
                     ef.printStackTrace();
                 }
             }
-        } else {
+        }else {
             showPopup("Please choose a filename",true);
         }
     }

@@ -5,6 +5,8 @@ import eu.hansolo.medusa.TickMarkType;
 import eu.hansolo.medusa.skins.GaugeSkin;
 
 class PureFunctions {
+    static String[] UserForbiddenCharacters = {".","/","\\"};
+    static String[] WindowsForbiddenCharacters = {"<",">",":","\"","/","\\","|","?","*"};
     static String skinTypeToString(Gauge.SkinType type) {
         switch (type) {
             case SLIM:

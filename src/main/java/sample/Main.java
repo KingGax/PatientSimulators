@@ -263,7 +263,7 @@ public class Main extends Application {
         headerPicker.getSelectionModel().selectFirst();
     }
     private boolean validateSimulationInputs(){
-        if (csvData.data == null){
+        if (csvData == null){
             showPopup("Please load in a valid data array");
             return false;
         }
@@ -315,6 +315,35 @@ public class Main extends Application {
         }
         return true;
     }
+    private boolean checkFilenameValid(String filename){
+        for (String i: PureFunctions.UserForbiddenCharacters) {
+            if (filename.contains(i)){
+                showPopup("Filename cannot contain " + i);
+                return false;
+            }
+        }
+        File newFile = new File(filename);
+        try {
+            newFile.createNewFile();
+            if (newFile.exists()){
+                newFile.delete();
+                return true;
+            } else {
+                showPopup(filename + " is a forbidden filename");
+                return  false;
+            }
+        } catch (Exception e) {
+            for (String i: PureFunctions.WindowsForbiddenCharacters) {
+                if (filename.contains(i)){
+                    showPopup("Filename cannot contain " + i);
+                    return false;
+                }
+            }
+            showPopup(filename + " is a forbidden filename");
+            return false;
+        }
+    }
+
     private void trySaveSimulation(){
         TextInputDialog textInput = new TextInputDialog();
         textInput.setTitle("Choose filename");
@@ -324,28 +353,29 @@ public class Main extends Application {
         Optional<String> result = textInput.showAndWait();
         TextField input = textInput.getEditor();
         if (input.getText() != null && input.getText().length() != 0){
-            if (validateSimulationInputs()){
-                int numGauges = selectedHeaderTitles.getItems().size();
-                HeaderParameters[] headers = new HeaderParameters[numGauges];
-                int count = 0;
-                for (InputTable row: selectedHeaderTitles.getItems() ) {
-                    headers[count] = new HeaderParameters(row);
-                    count++;
-                }
-                try {
-                    FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
-                    ObjectOutputStream dos = new ObjectOutputStream(fos);
-                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog, gaugeManager.getGaugeParameters(),gaugeManager.getGaugeNames()));
-                    System.out.println("file created: " + result.get());
-                    dos.flush();
-                    fos.close();
+            if(checkFilenameValid(input.getText())){
+                if (validateSimulationInputs()){
+                    int numGauges = selectedHeaderTitles.getItems().size();
+                    HeaderParameters[] headers = new HeaderParameters[numGauges];
+                    int count = 0;
+                    for (InputTable row: selectedHeaderTitles.getItems() ) {
+                        headers[count] = new HeaderParameters(row);
+                        count++;
+                    }
+                    try {
+                        FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
+                        ObjectOutputStream dos = new ObjectOutputStream(fos);
+                        dos.writeObject(new SimulationParameters(headers,csvData,eventLog, gaugeManager.getGaugeParameters(),gaugeManager.getGaugeNames()));
+                        System.out.println("file created: " + result.get());
+                        dos.flush();
+                        fos.close();
 
-                } catch (Exception ef) {
-                    ef.printStackTrace();
-                }
+                    } catch (Exception ef) {
+                        ef.printStackTrace();
+                    }
 
+                }
             }
-
         } else {
             showPopup("Please enter a filename");
         }
