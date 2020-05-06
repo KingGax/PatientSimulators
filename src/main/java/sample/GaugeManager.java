@@ -57,6 +57,10 @@ public class GaugeManager {
             minValue = PureFunctions.getMaxValue(data.headerName);
         }
         eu.hansolo.medusa.GaugeBuilder builder = GaugeBuilder.create();
+        if (type == Gauge.SkinType.LEVEL){
+            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.LEVEL).build();
+            return newGauge;
+        }
         if (type == Gauge.SkinType.SIMPLE_SECTION){
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
             newGauge.setBarColor(Color.rgb(77,208,225));
@@ -65,6 +69,7 @@ public class GaugeManager {
             newGauge.setUnitColor(Color.WHITE);
             newGauge.setBarBackgroundColor(Color.GRAY);
             newGauge.setAnimated(true);
+            return newGauge;
         } else if (type == Gauge.SkinType.TILE_SPARK_LINE) {
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).minValue(minValue).maxValue(maxValue).unit(PureFunctions.getUnit(data.headerName)).autoScale(true).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
             newGauge.setBarColor(Color.rgb(77,208,225));

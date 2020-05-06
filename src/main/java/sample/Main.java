@@ -81,7 +81,7 @@ public class Main extends Application {
         popup = new Popup();
         popup.setAutoHide(true);
         typeChooserTemplate = new ComboBox<>();
-        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph");
+        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph","Cylinder");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         title.getStyleClass().add("title");
@@ -276,30 +276,35 @@ public class Main extends Application {
                 double min, max, amber1, amber2, green1, green2;
                 min = Double.parseDouble(row.getMin().getText());
                 max = Double.parseDouble(row.getMax().getText());
-                String[] amberVals = row.getAmber().getText().split(",");
-                amber1 = Double.parseDouble(amberVals[0]);
-                amber2 = Double.parseDouble(amberVals[1]);
-                String[] greenVals = row.getGreen().getText().split(",");
-                green1 = Double.parseDouble(greenVals[0]);
-                green2 = Double.parseDouble(greenVals[1]);
-                if (green1 > green2) {
-                    showPopup("The first number in green on row " + row.getHeaderName() + " should be smaller than the second");
-                    return false;
+                if (row.getAmber().getText().compareTo("") != 0){
+                    String[] amberVals = row.getAmber().getText().split(",");
+                    amber1 = Double.parseDouble(amberVals[0]);
+                    amber2 = Double.parseDouble(amberVals[1]);
+                    if (amber1 > amber2){
+                        showPopup("The first number in amber on row " + row.getHeaderName() + " should be smaller than the second");
+                        return false;
+                    }
+                    if (amber1 > max || amber1 < min || amber2 > max || amber2 < min){
+                        showPopup("Amber ranges do not fall within the gauge range on row " + row.getHeaderName());
+                        return false;
+                    }
                 }
-                if (amber1 > amber2){
-                    showPopup("The first number in amber on row " + row.getHeaderName() + " should be smaller than the second");
-                    return false;
+                if (row.getGreen().getText().compareTo("") != 0){
+                    String[] greenVals = row.getGreen().getText().split(",");
+                    green1 = Double.parseDouble(greenVals[0]);
+                    green2 = Double.parseDouble(greenVals[1]);
+                    if (green1 > green2) {
+                        showPopup("The first number in green on row " + row.getHeaderName() + " should be smaller than the second");
+                        return false;
+                    }
+                    if (green1 > max || green1 < min || green2 > max || green2 < min){
+                        showPopup("Green ranges do not fall within the gauge range on row " + row.getHeaderName());
+                        return false;
+                    }
                 }
+
                 if (max < min) {
                     showPopup("Min is larger than max on row " + row.getHeaderName());
-                    return false;
-                }
-                if (green1 > max || green1 < min || green2 > max || green2 < min){
-                    showPopup("Green ranges do not fall within the gauge range on row " + row.getHeaderName());
-                    return false;
-                }
-                if (amber1 > max || amber1 < min || amber2 > max || amber2 < min){
-                    showPopup("Amber ranges do not fall within the gauge range on row " + row.getHeaderName());
                     return false;
                 }
 
@@ -555,6 +560,7 @@ public class Main extends Application {
             if (gauge.getCurrentValue() >= section.getStart() && gauge.getCurrentValue() <= section.getStop()){
                 if (gauge.getLedColor() != section.getColor()){
                     gauge.setLedColor(section.getColor());
+                    gauge.setBarColor(section.getColor());
                 }
                 break;
             }

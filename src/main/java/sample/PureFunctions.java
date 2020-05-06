@@ -25,6 +25,8 @@ class PureFunctions {
                 return "Vertical Half";
             case GAUGE:
                 return "Default Gauge";
+            case LEVEL:
+                return "Cylinder";
             default:
                 return null;
         }
@@ -317,6 +319,8 @@ class PureFunctions {
                 return Gauge.SkinType.VERTICAL;
             case "Default Gauge":
                 return Gauge.SkinType.GAUGE;
+            case "Cylinder":
+                return Gauge.SkinType.LEVEL;
             default:
                 return null;
         }
