@@ -75,12 +75,28 @@ public class Main extends Application {
 
     //Initial scene setup
     public void start(Stage stage) {
+        /*Setting up all elements on the setup page
+        Title - Top header
+        typeChooserTemplate - An item that will be cloned for every header added to the table
+        fileChooser - The file browser object that will be passed around
+        popup - global variable that will be styled and used as a default popup
+        selectedHeaderTitles - The tableview that will store simulation details
+
+        ## For Every button we setOnAction which calls these functions:
+        tryAddHeader - Will add a new header if it doesn't already exist
+        trySaveSimulation - Will create a popup make sure simulation is valid then save it to that filename
+        tryLoadSimulation - Will open a filepicker to let you load a .sim file
+        openFile - Opens data and events log, depending on the bool you give it
+        addCustomGaugeOption - Opens the file chooser and tried to load in a custom gauge
+         */
+
         gaugeManager = new GaugeManager(new ArrayList<String>(), new ArrayList<SGauge>());
         mainStage = stage;
         dataReader = null;
         popup = new Popup();
         popup.setAutoHide(true);
         typeChooserTemplate = new ComboBox<>();
+        //setting style classes and initialising style classes
         typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph","Cylinder");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
@@ -103,10 +119,13 @@ public class Main extends Application {
         Button customGaugeButton = new Button("Add Custom Gauge");
         customGaugeButton.setOnAction(e -> addCustomGaugeOption(fileChooser,stage));
         customGaugeButton.getStyleClass().add("button-yellow");
+
         saveSimulationButton.setOnAction(e -> trySaveSimulation());
         loadSimulationButton.setOnAction(e -> tryLoadSimulation(fileChooser));
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
+
+        //Setup layout on the page with gridPanes and hboxes
         GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -151,83 +170,93 @@ public class Main extends Application {
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
-        simulationButton.setOnAction(e->tryRunSimulation(stage,welcome));
         borderPane.setTop(header);
         borderPane.setId("background");
+
+        simulationButton.setOnAction(e->tryRunSimulation(stage,welcome));
+
+        //Setting up the main tableview columns
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
         headerName.getStyleClass().add("table-heads");
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
+
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(110);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
         dataType.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> minVal = new TableColumn<>();
         minVal.setMinWidth(50);
         minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
         minVal.setText("Min");
         minVal.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> maxVal = new TableColumn<>();
         maxVal.setMinWidth(50);
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         maxVal.getStyleClass().add("table-heads");
         dataType.setText("Gauge Type");
+
         TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
         amberSection.setMinWidth(80);
         amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
         amberSection.setText("Amber Section");
         amberSection.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> greenSection = new TableColumn<>();
         greenSection.setMinWidth(80);
         greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
         greenSection.setText("Green Section");
         greenSection.getStyleClass().add("table-heads");
+
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
+
         stage.getIcons().add(new Image("res/Patient_Simulator_Logo.png"));
         stage.show();
     }
 
-    private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){
+    private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){//Opens file browser and loads a custom gauge into memory, adding it to the gauge[] array
         fileChooser.setTitle("Select Custom Gauge");
         File workingDirectory = new File(System.getProperty("user.dir"));
         fileChooser.setInitialDirectory(workingDirectory);
-        File file = fileChooser.showOpenDialog(stage);
+        File file = fileChooser.showOpenDialog(stage);//open file chooser
         if (file != null) {
-            if (getFileExtension(file.getPath()).compareTo("gauge") == 0){
-                typeChooserTemplate.getItems().add(file.getName().split("\\.")[0]);
+            if (getFileExtension(file.getPath()).compareTo("gauge") == 0){//check it is a gauge file
+                typeChooserTemplate.getItems().add(file.getName().split("\\.")[0]);//adds the name of the gauge name to the template
                 if (selectedHeaderTitles.getItems().size()>0){
-                    for (InputTable item:selectedHeaderTitles.getItems() ) {
+                    for (InputTable item:selectedHeaderTitles.getItems() ) {//adds the item to the comboboxes already inside the table
                         item.getOptions().getItems().add(file.getName().split("\\.")[0]);
                     }
                 }
-                gaugeManager.loadInGauge(file);
+                gaugeManager.loadInGauge(file);//loads in the file and adds it to gauge[] array
             } else {
                 showPopup("Please select a .gauge file");
             }
         }
     }
 
-    private void tryLoadSimulation(FileChooser fileChooser){
+    private void tryLoadSimulation(FileChooser fileChooser){ //tries to load in a simulation
         try {
             fileChooser.setTitle("Select Simulation");
             File workingDirectory = new File(System.getProperty("user.dir"));
             fileChooser.setInitialDirectory(workingDirectory);
-            File file = fileChooser.showOpenDialog(mainStage);
-            if (getFileExtension(file.getPath()).compareTo("sim") == 0){
-                FileInputStream fis = new FileInputStream(file);
+            File file = fileChooser.showOpenDialog(mainStage); //open directory
+            if (getFileExtension(file.getPath()).compareTo("sim") == 0){//checks correct file
+                FileInputStream fis = new FileInputStream(file);//reads in file
                 ObjectInputStream dis = new ObjectInputStream(fis);
                 SimulationParameters sim = (SimulationParameters) dis.readObject();
-                csvData = sim.getCSVData();
+                csvData = sim.getCSVData();//extract data from sim into the program
                 HeaderParameters[] headerData = sim.getHeaders();
                 eventLog = sim.getEventLog();
-                eventsSelected = (eventLog.size() != 0);
-                gaugeManager.setGaugeNames(sim.getCustomNames());
-                gaugeManager.setGaugeParameters(sim.getCustomGauges());
+                eventsSelected = (eventLog.size() != 0);//sets whether events log is empty or not
+                gaugeManager.setGaugeNames(sim.getCustomNames());//sets list of custom names
+                gaugeManager.setGaugeParameters(sim.getCustomGauges());//sets list of custom presets
                 rowCount = csvData.data.length;
-                updateTablesWithLoadedSimulation(csvData.headers,headerData);
+                updateTablesWithLoadedSimulation(csvData.headers,headerData);//populates table and combo box
             } else {
                 showPopup("Please select a .sim file");
             }
@@ -239,18 +268,18 @@ public class Main extends Application {
         }
 
     }
-    private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
+    private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){//Fills table when simulation loaded
         headerPicker.getItems().clear();
         selectedHeaderTitles.getItems().clear();
-        for (String customGaugeName:gaugeManager.getGaugeNames() ) {
+        for (String customGaugeName:gaugeManager.getGaugeNames() ) {//adds custom gauges to template
             typeChooserTemplate.getItems().add(customGaugeName);
         }
-        for (String currentItem : allHeaders) {
+        for (String currentItem : allHeaders) {//fils out header selection box
             if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
                 headerPicker.getItems().add(currentItem);
             }
         }
-        for (HeaderParameters h : headerSettings) {
+        for (HeaderParameters h : headerSettings) {//fills out the table with all saved headers
                 ComboBox<String> typePicker = new ComboBox<>();
                 typePicker.getItems().addAll(typeChooserTemplate.getItems());
                 typePicker.getSelectionModel().select(h.getGaugeType());
@@ -262,21 +291,21 @@ public class Main extends Application {
         }
         headerPicker.getSelectionModel().selectFirst();
     }
-    private boolean validateSimulationInputs(){
-        if (csvData == null){
+    private boolean validateSimulationInputs(){//checks simulation can be run
+        if (csvData == null){//checks data log loaded
             showPopup("Please load in a valid data array");
             return false;
         }
-        if (selectedHeaderTitles.getItems().size() < 1){
+        if (selectedHeaderTitles.getItems().size() < 1){//checks a header selected
             showPopup("Please select at least one header");
             return false;
         }
-        for (InputTable row: selectedHeaderTitles.getItems()) {
+        for (InputTable row: selectedHeaderTitles.getItems()) {//runs validation on every row
             try {
                 double min, max, amber1, amber2, green1, green2;
                 min = Double.parseDouble(row.getMin().getText());
                 max = Double.parseDouble(row.getMax().getText());
-                if (row.getAmber().getText().compareTo("") != 0){
+                if (row.getAmber().getText().compareTo("") != 0){//if section is added
                     String[] amberVals = row.getAmber().getText().split(",");
                     amber1 = Double.parseDouble(amberVals[0]);
                     amber2 = Double.parseDouble(amberVals[1]);
@@ -289,7 +318,7 @@ public class Main extends Application {
                         return false;
                     }
                 }
-                if (row.getGreen().getText().compareTo("") != 0){
+                if (row.getGreen().getText().compareTo("") != 0){//if section is added
                     String[] greenVals = row.getGreen().getText().split(",");
                     green1 = Double.parseDouble(greenVals[0]);
                     green2 = Double.parseDouble(greenVals[1]);
@@ -315,8 +344,8 @@ public class Main extends Application {
         }
         return true;
     }
-    private boolean checkFilenameValid(String filename){
-        for (String i: PureFunctions.UserForbiddenCharacters) {
+    private boolean checkFilenameValid(String filename){//checks if the file can be created
+        for (String i: PureFunctions.UserForbiddenCharacters) {//checks for characters that would change how the file is saved, --> / . or \
             if (filename.contains(i)){
                 showPopup("Filename cannot contain " + i);
                 return false;
@@ -324,15 +353,15 @@ public class Main extends Application {
         }
         File newFile = new File(filename);
         try {
-            newFile.createNewFile();
-            if (newFile.exists()){
+            newFile.createNewFile();//creates file with filename
+            if (newFile.exists()){//if location is ok it deletes
                 newFile.delete();
-                return true;
-            } else {
+                return true;//therefore file is valid
+            } else { //if it does not exist windows has not let them create the file for whatever reason
                 showPopup(filename + " is a forbidden filename");
                 return  false;
             }
-        } catch (Exception e) {
+        } catch (Exception e) {//if it crashes it contains an invalid character, one that windows forbids
             for (String i: PureFunctions.WindowsForbiddenCharacters) {
                 if (filename.contains(i)){
                     showPopup("Filename cannot contain " + i);
@@ -344,25 +373,25 @@ public class Main extends Application {
         }
     }
 
-    private void trySaveSimulation(){
+    private void trySaveSimulation(){//attempts to save simulation presets
         TextInputDialog textInput = new TextInputDialog();
         textInput.setTitle("Choose filename");
         textInput.getDialogPane().setContentText("Please choose a filename:");
         textInput.setHeaderText("Save file");
         textInput.setGraphic(null);
-        Optional<String> result = textInput.showAndWait();
+        Optional<String> result = textInput.showAndWait();//shows popup
         TextField input = textInput.getEditor();
-        if (input.getText() != null && input.getText().length() != 0){
-            if(checkFilenameValid(input.getText())){
-                if (validateSimulationInputs()){
+        if (input.getText() != null && input.getText().length() != 0){//checks something non null has been input
+            if(checkFilenameValid(input.getText())){//validates filename
+                if (validateSimulationInputs()){//validates input
                     int numGauges = selectedHeaderTitles.getItems().size();
-                    HeaderParameters[] headers = new HeaderParameters[numGauges];
+                    HeaderParameters[] headers = new HeaderParameters[numGauges];//sets up array to store gauge related values
                     int count = 0;
-                    for (InputTable row: selectedHeaderTitles.getItems() ) {
+                    for (InputTable row: selectedHeaderTitles.getItems() ) {//turns rows into saveable objects
                         headers[count] = new HeaderParameters(row);
                         count++;
                     }
-                    try {
+                    try {//package all information into saveable SimulationParameters class and saves
                         FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
                         ObjectOutputStream dos = new ObjectOutputStream(fos);
                         dos.writeObject(new SimulationParameters(headers,csvData,eventLog, gaugeManager.getGaugeParameters(),gaugeManager.getGaugeNames()));
@@ -385,15 +414,15 @@ public class Main extends Application {
 
 
 
-    //Checks at least one header has been selected
+    //Checks simulation can be run and calls dashboard scene
     private void tryRunSimulation(Stage stage,Scene welcome)
     {
         if (validateSimulationInputs())
         {
-            stage.setScene(getDashboardScene(welcome));
+            stage.setScene(getDashboardScene(welcome));//updates scene
             for (Gauge gauge : gauges){
-                if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.4
-                    double firstValue = gauge.getCurrentValue();
+                if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.5 due to an strange library bug
+                    double firstValue = gauge.getCurrentValue();//this is filling the line graphs data array
                         for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
                             gauge.setValue(firstValue);
                             gauge.setValue(firstValue * 0.99999);
@@ -421,7 +450,7 @@ public class Main extends Application {
     private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         int numGauges = selectedItems.getItems().size();
-        int numColumns = 3; //arbitrary guesses atm
+        int numColumns = 3; //arbitrary guesses atm this decides the layout of gauges on screen
         if (numGauges > 6) numColumns = 4;
         if (numGauges >=10) numColumns = 5;
         if (numGauges >=12) numColumns = 6;
@@ -430,16 +459,16 @@ public class Main extends Application {
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             Gauge gauge;
-            if (type != null){
+            if (type != null){//this checks whether the name exists already or not, if it exists in the system then it will create it. otherwise its custom
                 gauge = gaugeManager.buildGauge(type,selectedItems.getItems().get(i), csvData);
             } else {
                 gauge = gaugeManager.buildCustomGauge(selectedItems.getItems().get(i), csvData);
             }
-            double[] sections = parseSectionData(selectedItems.getItems().get(i));
-            gauge.calcAutoScale();
-            addSections(sections,gauge);
+            double[] sections = parseSectionData(selectedItems.getItems().get(i));//takes section data out of the values and adds red to it
+            gauge.calcAutoScale();//calculates the number of ticks on the gauge
+            addSections(sections,gauge);//adds sections
             gauge.setPrefSize(800,800);
-            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
+            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);//puts the gauges into boxes that will be displayed on screen
             pane.add(gaugeBox,i %numColumns, i/numColumns);
             gauges.add(gauge);
         }
@@ -448,7 +477,7 @@ public class Main extends Application {
         pane.setVgap(15);
         pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
-        TimerTask task = new EventTimerTask(this);
+        TimerTask task = new EventTimerTask(this);//begin event timer for updating gauges
         eventTimer.scheduleAtFixedRate(task, 0,(int)(updateFrequency/speedModifier));
         timerStarted = true;
     }
@@ -521,16 +550,16 @@ public class Main extends Application {
         }//if no sections, do not add red or any sections
     }
 
-    private double[] parseSectionData(InputTable data){
+    private double[] parseSectionData(InputTable data){//extracts the numbers into the correct layout from the "x,x" strings
         double[] results = new double[4];
         parseOneSection(results,0,data.getAmber().getText());
         parseOneSection(results,1,data.getGreen().getText());
         return results;
     }
 
-    private void parseOneSection(double[]results, int index,String text ){
+    private void parseOneSection(double[]results, int index,String text ){//turns a singular "x,x" into an array, if it is invalid sets the value as 0
         String[] textArray = text.split(",");
-        if (textArray.length == 2){
+        if (textArray.length == 2){//this function weaves them into the results array as [amber,green,green2,amber2]
             try {
                 results[index] = Double.parseDouble(textArray[0]);
                 results[results.length-1-index] = Double.parseDouble(textArray[1]);
@@ -585,12 +614,12 @@ public class Main extends Application {
 
     }
 
-    private void updateBlinkingLight(Gauge gauge){
+    private void updateBlinkingLight(Gauge gauge){//checks if the section colour has changed and if it has it changes the gauge colour
         for (Section section :gauge.getSections()) {
             if (gauge.getCurrentValue() >= section.getStart() && gauge.getCurrentValue() <= section.getStop()){
                 if (gauge.getLedColor() != section.getColor()){
-                    gauge.setLedColor(section.getColor());
-                    gauge.setBarColor(section.getColor());
+                    gauge.setLedColor(section.getColor());//for led gauges
+                    gauge.setBarColor(section.getColor());//for line and cylinder
                 }
                 break;
             }
@@ -628,18 +657,18 @@ public class Main extends Application {
 
     //Setup for TopicBox
     private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
-        Rectangle bar = new Rectangle(200, 3);
+        Rectangle bar = new Rectangle(200, 3);//blue bar
         bar.setArcWidth(6);
         bar.setArcHeight(6);
         bar.setFill(COLOR);
 
-        Label label = new Label(TEXT);
+        Label label = new Label(TEXT);//header
         label.setTextFill(COLOR);
         label.setFont(Font.font(label.getFont().getFamily(), FontWeight.BOLD,34));
         label.setAlignment(Pos.CENTER);
         label.setPadding(new Insets(0, 0, 10, 0));
 
-        VBox vBox = new VBox(bar, label, GAUGE);
+        VBox vBox = new VBox(bar, label, GAUGE);//final box
         vBox.setSpacing(3);
         vBox.setAlignment(Pos.CENTER);
         return vBox;
@@ -674,10 +703,11 @@ public class Main extends Application {
     //Attempts to add item to ListView
     private void tryAddItem(String item, TableView<InputTable> tv)
     {
-        if (!checkItemPresent(item,tv)&&(item!=null)){
+        if (!checkItemPresent(item,tv)&&(item!=null)){//if not already added
             ComboBox<String> typePicker = new ComboBox<>();
-            typePicker.getItems().addAll(typeChooserTemplate.getItems());
-            typePicker.getSelectionModel().selectFirst();
+            typePicker.getItems().addAll(typeChooserTemplate.getItems());//duplicates the template
+            typePicker.getSelectionModel().selectFirst();//selects default gauge
+            //These next text boxes are each set up so that they prevent the user inputting invalid data
             TextField min = newValidatingDoubleTextField(Double.toString(PureFunctions.getMinValue(item)));
             TextField max = newValidatingDoubleTextField(Double.toString(PureFunctions.getMaxValue(item)));
             TextField amber = newValidatingRangeTextField(PureFunctions.getAmberRange(item));
@@ -686,6 +716,7 @@ public class Main extends Application {
         }
     }
 
+    //creates an textbox that will auto validate itself when the user either presses enter or exits the focus, ensuring it always has valid inputs
     private TextField newValidatingRangeTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -694,8 +725,9 @@ public class Main extends Application {
         return tf;
     }
 
+    //this is how it checks if a range is valid, and "" is valid to allow no section to be entered
     private boolean validateRange(TextField textBox,Boolean oldVal){
-        if (oldVal){
+        if (oldVal){//this is whether the value has changed
             if (textBox.getText().compareTo("") == 0){
                 return true;
             }
@@ -720,6 +752,7 @@ public class Main extends Application {
         return false;
     }
 
+    //this is the same as the range validating textbox just it calls a different validation function
     private TextField newValidatingDoubleTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -728,6 +761,7 @@ public class Main extends Application {
         return tf;
     }
 
+    //checks if a double is valid and outputs error if it is not
     private boolean validateDouble(String text, boolean oldVal){
         if (oldVal){
             try {
@@ -994,11 +1028,12 @@ public class Main extends Application {
         }
     }
 
+    //gets the string after the last dot in a filename
     private String getFileExtension(String path)
     {
         int i = path.lastIndexOf('.');
         int p = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        if (i > p) {
+        if (i > p) {//makes sure its not a directory within the path that has a dot
             return path.substring(i+1);
         }
         return "";
@@ -1007,23 +1042,23 @@ public class Main extends Application {
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File workingDirectory = new File(System.getProperty("user.dir"));
-        if (eventsLog){
+        if (eventsLog){//to help user know what to do
             fileChooser.setTitle("Select Events Log");
         } else {
             fileChooser.setTitle("Select Data Log");
         }
         fileChooser.setInitialDirectory(workingDirectory);
-        File file = fileChooser.showOpenDialog(stage);
-        if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
+        File file = fileChooser.showOpenDialog(stage);//open file dialog
+        if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {//check theyve chosen a csv file
             try {
-                if (eventsLog){
+                if (eventsLog){//for events logs
                     BufferedReader eventReader = new BufferedReader(new FileReader(file));
-                    eventLog = openEventLog(eventReader);
+                    eventLog = openEventLog(eventReader);//call event log reader function
                 }
-                else {
-                    dataReader = new BufferedReader(new FileReader(file));
-                    extractHeaders(file, dataReader);
-                    fillCSVData(file, dataReader);
+                else {//for data
+                    dataReader = new BufferedReader(new FileReader(file));//create a new reader
+                    extractHeaders(file, dataReader);//put headers into the header picker box
+                    fillCSVData(file, dataReader);//fill csvdata for saving
                     dataReader.close(); //must be closed and reopened to use later
                     dataReader = new BufferedReader(new FileReader(file));
                 }
@@ -1031,16 +1066,18 @@ public class Main extends Application {
                 System.out.println("IOException in opening file");
             }
         }
-        else if (file != null){
-            if (getFileExtension(file.getPath()).compareTo("csv")!=0)
+        else if (file != null){//displays error if file is not csv
+            if (getFileExtension(file.getPath()).compareTo("csv")!=0)//
             {
                 showPopup("Please choose a CSV file");
             }
         }
     }
+    //creates a csvData object using fillDataArray with all headers selected
     private void fillCSVData(File file, BufferedReader dataReader){
         csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
     }
+    //counts number of rows in the simulation
     private void countRows(File file){
         try{
             BufferedReader rowReader = new BufferedReader(new FileReader(file));
@@ -1054,18 +1091,20 @@ public class Main extends Application {
         }
     }
 
+    //takes headers of a file and fills combo box
     private void extractHeaders(File file, BufferedReader reader){
         try {
             reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
             String commaSep = reader.readLine();
             reader.reset();
-            fillComboBoxFromReader(commaSep);
+            fillComboBoxFromReader(commaSep);//fills options combo box
         } catch (IOException ex) {
             System.out.println("IOException in printing file");
         }
         countRows(file);
     }
 
+    //opens event log into an arrayList of event data objects
     private ArrayList<EventData> openEventLog(BufferedReader eventReader)
     {
         ArrayList<EventData> eLog = new ArrayList<>();
