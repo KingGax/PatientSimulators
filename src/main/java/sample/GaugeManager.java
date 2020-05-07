@@ -54,10 +54,10 @@ public class GaugeManager {
         try {
             minValue = Double.parseDouble(data.getMin().getText());
         }catch(Exception e){
-            minValue = PureFunctions.getMaxValue(data.headerName);
+            minValue = PureFunctions.getMinValue(data.headerName);
         }
         eu.hansolo.medusa.GaugeBuilder builder = GaugeBuilder.create();
-        if (type == Gauge.SkinType.LEVEL){
+        if (type == Gauge.SkinType.LEVEL){//cylinder
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.LEVEL).build();
             return newGauge;
         }
@@ -75,7 +75,7 @@ public class GaugeManager {
             newGauge.setBarColor(Color.rgb(77,208,225));
             newGauge.setBarBackgroundColor(Color.WHITE);
             newGauge.setAnimated(true);
-            setupLineGraph(newGauge, data.headerName, csvData);
+            setupLineGraph(newGauge, data.headerName, csvData);//line graph animation setup
             return newGauge;
         }
         newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
