@@ -12,7 +12,6 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 
-
 //Handles interactions regarding custom gauges in Welcome scene
 public class GaugeManager {
     private ArrayList<String> loadedGaugeNames;
@@ -39,10 +38,11 @@ public class GaugeManager {
         this.loadedGaugeParameters = gaugeParameters;
     }
 
+    //Builds existing gauge given parameters and returns it
     Gauge buildGauge(Gauge.SkinType type, InputTable data, CSVData csvData){
         Gauge newGauge = null;
         double maxValue, minValue;
-        int decimals = PureFunctions.getDecimals(data.headerName);
+        int decimals = PureFunctions.getDecimals(data.headerName); //gets number of DP for header
         int tickLabelDecimals;
         tickLabelDecimals = decimals - 1;
         if (decimals > 1) tickLabelDecimals = decimals;
@@ -83,9 +83,10 @@ public class GaugeManager {
         return newGauge;
     }
 
+    //Build custom gauge given parameters
     Gauge buildCustomGauge(InputTable data, CSVData csvData){
         Gauge newGauge;
-        double maxValue, minValue;
+        double maxValue, minValue; //Extract min and max values from csvData
         try {
             maxValue = Integer.parseInt(data.getMax().getText());
         }catch(Exception e){
@@ -96,21 +97,24 @@ public class GaugeManager {
         }catch(Exception e){
             minValue = PureFunctions.getMinValue(data.headerName);
         }
-        try {
+        try { //Apply customisations to gauge
             Gauge customisations = loadedGaugeParameters.get(loadedGaugeNames.indexOf(data.getOptions().getValue())).getGauge();
             GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
             newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
             updateCurrentGaugeSkin(newGauge,customisations);
             newGauge.setLedOn(true);
             newGauge.calcAutoScale();
-            setupLineGraph(newGauge,data.getHeaderName(), csvData);
+            if (newGauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){ //Checks if needs building as line graph
+                setupLineGraph(newGauge,data.getHeaderName(), csvData);
+            }
             return newGauge;
-        } catch (Exception ef) {
+        } catch (Exception ef) { //If gauge type cannot be built, build as MODERN skin
             System.out.println(ef);
             return buildGauge(Gauge.SkinType.MODERN, data, csvData);
         }
     }
 
+    //Changes gauge skin, copying previous skin properties over to new skin
     private void updateCurrentGaugeSkin(Gauge currentGauge, Gauge oldGauge ){
         Color needleColour = oldGauge.getNeedleColor();
         Paint backgroundPaint = oldGauge.getBackgroundPaint();
@@ -176,6 +180,7 @@ public class GaugeManager {
         currentGauge.setTickLabelLocation(tickLabelLocation);
     }
 
+    //Sets gauge properties to default styling
     private void setDefaultGaugeCustomisation(Gauge gauge){
         gauge.setBackgroundPaint(Color.WHITE);
         gauge.setMajorTickMarkLengthFactor(0.6);
@@ -192,6 +197,7 @@ public class GaugeManager {
         //gauge.setMinorTickMarksVisible(false);
     }
 
+    //Performs line graph setup and sets properties according to parameters
     private void setupLineGraph(Gauge newGauge,String headerName, CSVData csvData){
         int numPoints = 150;
         double firstPoint = csvData.data[0][getNameIndex(headerName,csvData.headers)];
@@ -201,6 +207,7 @@ public class GaugeManager {
         newGauge.setTitle(headerName);
     }
 
+    //Load gauge from .gauge file
     void loadInGauge(File file) {
         try {
             FileInputStream fis = new FileInputStream(file.getPath());
@@ -211,8 +218,9 @@ public class GaugeManager {
         } catch (Exception e) {
 
         }
-
     }
+
+    //Finds index of string in
     private int getNameIndex(String name, String[] headers){
         for (int i = 0; i < headers.length; i++) {
             if (headers[i].compareTo(name) == 0){

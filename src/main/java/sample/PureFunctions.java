@@ -4,6 +4,7 @@ import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.TickMarkType;
 import eu.hansolo.medusa.skins.GaugeSkin;
 
+//Functions to retrieve default values for headers and gauge properties
 class PureFunctions {
     static String[] UserForbiddenCharacters = {".","/","\\"};
     static String[] WindowsForbiddenCharacters = {"<",">",":","\"","/","\\","|","?","*"};

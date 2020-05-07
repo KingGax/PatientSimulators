@@ -7,7 +7,7 @@ import javafx.scene.paint.Color;
 
 import java.io.Serializable;
 import java.util.Objects;
-
+//Serialisable gauge class, with getter/setter (for saving gauges)
 public class SGauge implements Serializable {
     private String skinType;
     private String needleType;
@@ -41,9 +41,6 @@ public class SGauge implements Serializable {
     private double majorTickLength;
     private boolean tickLabelsVisible;
     private TickLabelLocation tickLabelLocation;
-
-
-
 
     public void setGauge(Gauge gauge) {
         skinType = PureFunctions.skinTypeToString(gauge.getSkinType());
@@ -79,6 +76,7 @@ public class SGauge implements Serializable {
         tickLabelsVisible = gauge.getTickLabelsVisible();
         tickLabelLocation = gauge.getTickLabelLocation();
     }
+
     public Gauge getGauge() {
         Gauge gauge = new Gauge();
         gauge.setSkinType(Objects.requireNonNull(PureFunctions.translateStringToGaugeType(skinType)));

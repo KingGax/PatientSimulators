@@ -5,6 +5,7 @@ import eu.hansolo.medusa.Gauge;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+//Class for saving simulations
 public class SimulationParameters implements Serializable {
     private static final long serialVersionUID = 6128016096756071380L;
     private HeaderParameters[] headers;

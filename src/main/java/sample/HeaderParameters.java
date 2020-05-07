@@ -5,6 +5,7 @@ import javafx.scene.control.TextField;
 
 import java.io.Serializable;
 
+//Class for saving headers (for saving simulations)
 public class HeaderParameters implements Serializable {
     private String headerName;
     private String gaugeType;

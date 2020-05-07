@@ -68,8 +68,6 @@ public class Main extends Application {
     private Stage mainStage;
     private CSVData csvData;
     private String[] headerNames;
-    //private ArrayList<String> loadedGaugeNames = new ArrayList<String>();
-    //private ArrayList<SGauge> loadedGaugeParameters = new ArrayList<SGauge>();
     private GaugeManager gaugeManager;
     @Override
 
@@ -219,7 +217,8 @@ public class Main extends Application {
         stage.show();
     }
 
-    private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){//Opens file browser and loads a custom gauge into memory, adding it to the gauge[] array
+    //Opens file browser and loads a custom gauge into memory, adding it to the gauge[] array
+    private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){
         fileChooser.setTitle("Select Custom Gauge");
         File workingDirectory = new File(System.getProperty("user.dir"));
         fileChooser.setInitialDirectory(workingDirectory);
@@ -239,7 +238,8 @@ public class Main extends Application {
         }
     }
 
-    private void tryLoadSimulation(FileChooser fileChooser){ //tries to load in a simulation
+    //Tries to load in a simulation
+    private void tryLoadSimulation(FileChooser fileChooser){
         try {
             fileChooser.setTitle("Select Simulation");
             File workingDirectory = new File(System.getProperty("user.dir"));
@@ -266,9 +266,10 @@ public class Main extends Application {
             System.out.println("we;re out "+ef);
 
         }
-
     }
-    private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){//Fills table when simulation loaded
+
+    //Fills table when simulation loaded
+    private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
         headerPicker.getItems().clear();
         selectedHeaderTitles.getItems().clear();
         for (String customGaugeName:gaugeManager.getGaugeNames() ) {//adds custom gauges to template
@@ -291,7 +292,9 @@ public class Main extends Application {
         }
         headerPicker.getSelectionModel().selectFirst();
     }
-    private boolean validateSimulationInputs(){//checks simulation can be run
+
+    //Checks simulation can be run
+    private boolean validateSimulationInputs(){
         if (csvData == null){//checks data log loaded
             showPopup("Please load in a valid data array");
             return false;
@@ -344,7 +347,9 @@ public class Main extends Application {
         }
         return true;
     }
-    private boolean checkFilenameValid(String filename){//checks if the file can be created
+
+    //Checks if the file can be created
+    private boolean checkFilenameValid(String filename){
         for (String i: PureFunctions.UserForbiddenCharacters) {//checks for characters that would change how the file is saved, --> / . or \
             if (filename.contains(i)){
                 showPopup("Filename cannot contain " + i);
@@ -373,7 +378,8 @@ public class Main extends Application {
         }
     }
 
-    private void trySaveSimulation(){//attempts to save simulation presets
+    //Attempts to save simulation presets
+    private void trySaveSimulation(){
         TextInputDialog textInput = new TextInputDialog();
         textInput.setTitle("Choose filename");
         textInput.getDialogPane().setContentText("Please choose a filename:");
@@ -402,31 +408,24 @@ public class Main extends Application {
                     } catch (Exception ef) {
                         ef.printStackTrace();
                     }
-
                 }
             }
         } else {
             showPopup("Please enter a filename");
         }
-
     }
 
-
-
-
     //Checks simulation can be run and calls dashboard scene
-    private void tryRunSimulation(Stage stage,Scene welcome)
-    {
-        if (validateSimulationInputs())
-        {
+    private void tryRunSimulation(Stage stage,Scene welcome) {
+        if (validateSimulationInputs()) {
             stage.setScene(getDashboardScene(welcome));//updates scene
             for (Gauge gauge : gauges){
                 if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.5 due to an strange library bug
                     double firstValue = gauge.getCurrentValue();//this is filling the line graphs data array
-                        for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
-                            gauge.setValue(firstValue);
-                            gauge.setValue(firstValue * 0.99999);
-                        }
+                    for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
+                        gauge.setValue(firstValue);
+                        gauge.setValue(firstValue * 0.99999);
+                    }
                 }
             }
             stage.setMaximized(true);
@@ -459,7 +458,7 @@ public class Main extends Application {
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             Gauge gauge;
-            if (type != null){//this checks whether the name exists already or not, if it exists in the system then it will create it. otherwise its custom
+            if (type != null){//this checks whether the name exists already or not, if it exists in the system then it will create it. Otherwise it's custom
                 gauge = gaugeManager.buildGauge(type,selectedItems.getItems().get(i), csvData);
             } else {
                 gauge = gaugeManager.buildCustomGauge(selectedItems.getItems().get(i), csvData);
@@ -482,18 +481,8 @@ public class Main extends Application {
         timerStarted = true;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-    private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
+    //Sections laid out as [amber1,green1,green2,amber2]
+    private void addSections(double[] sections,Gauge newGauge){
         if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {//checks there is at least one section
             if (sections[0] == 0 && sections[3] == 0){//no amber section so add just green
                 newGauge.addSection(new Section(sections[1],sections[2],Color.GREEN));
@@ -550,14 +539,16 @@ public class Main extends Application {
         }//if no sections, do not add red or any sections
     }
 
-    private double[] parseSectionData(InputTable data){//extracts the numbers into the correct layout from the "x,x" strings
+    //Extracts the numbers into the correct layout from the "x,x" strings
+    private double[] parseSectionData(InputTable data){
         double[] results = new double[4];
         parseOneSection(results,0,data.getAmber().getText());
         parseOneSection(results,1,data.getGreen().getText());
         return results;
     }
 
-    private void parseOneSection(double[]results, int index,String text ){//turns a singular "x,x" into an array, if it is invalid sets the value as 0
+    //Turns a singular "x,x" into an array, if it is invalid sets the value as 0
+    private void parseOneSection(double[]results, int index,String text ){
         String[] textArray = text.split(",");
         if (textArray.length == 2){//this function weaves them into the results array as [amber,green,green2,amber2]
             try {
@@ -578,27 +569,26 @@ public class Main extends Application {
         for (int i = 0; i < gauges.size(); i++) {
             float currentVal, nextVal, gaugeVal;
             currentVal = dataArray[currentStep][i + 1];
-            if (currentStep < dataArray.length - 1) {
+            if (currentStep < dataArray.length - 1) { //If simulation still playing
                 nextVal = dataArray[currentStep + 1][i + 1];
                 gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
-            } else {
+            } else { //If finished
                 gaugeVal = currentVal;
                 eventTimer.cancel();
                 timerStarted = false;
             }
             try {
                 final int x = i;
-                if (gauges.get(x).getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){
+                if (gauges.get(x).getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){ //Fix for a quirk with Medusa graphs
                     if (gaugeVal == gauges.get(x).getCurrentValue()){
-                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal*1.00000000001));
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal*1.00000000001)); //Ensures line graph updates display (quirk with Medusa graphs)
                     } else {
-                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal)); //updates graph value on UI thread
                     }
                 } else {
-                    Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                    Platform.runLater(() ->gauges.get(x).setValue(gaugeVal)); //updates gauge value on UI thread
                 }
-
-                Platform.runLater(() -> updateBlinkingLight(gauges.get(x)));
+                Platform.runLater(() -> updateBlinkingLight(gauges.get(x))); //updates LED on UI thread
             } catch (NullPointerException e){
                 System.out.println("Data value at indices " + currentStep + ", " + i+1 + "appears to be null.");
             }
@@ -608,12 +598,13 @@ public class Main extends Application {
         if (mu == 0){
             currentStep++;
         }
-        Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
+        Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5)); //updates time slider on UI thread
         updateTimeLabel();
         if (eventsSelected) updateEventBox();
 
     }
 
+    //Updates gauge LED to match current needle section
     private void updateBlinkingLight(Gauge gauge){//checks if the section colour has changed and if it has it changes the gauge colour
         for (Section section :gauge.getSections()) {
             if (gauge.getCurrentValue() >= section.getStart() && gauge.getCurrentValue() <= section.getStop()){
@@ -631,7 +622,7 @@ public class Main extends Application {
         Platform.runLater(() -> timeLabel.setText("Time Elapsed: " + (currentStep + mu) * 5 +"s"));
     }
 
-    //Updates event box
+    //Updates event box from eventLog
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
         while (eventLog.get(eventIndex).getTime() <= currentTime){
@@ -640,6 +631,7 @@ public class Main extends Application {
         }
     }
 
+    //Rebuilds event box after time is skipped
     private void rebuildEventLog(){
         eventBox.getItems().clear();
         eventIndex = 0;
@@ -716,7 +708,7 @@ public class Main extends Application {
         }
     }
 
-    //creates an textbox that will auto validate itself when the user either presses enter or exits the focus, ensuring it always has valid inputs
+    //Creates a textbox that self-validates when the user either presses enter or exits the focus, ensuring it always has valid inputs
     private TextField newValidatingRangeTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -725,7 +717,7 @@ public class Main extends Application {
         return tf;
     }
 
-    //this is how it checks if a range is valid, and "" is valid to allow no section to be entered
+    //Checks if a range is valid ("" is valid to allow no section to be entered)
     private boolean validateRange(TextField textBox,Boolean oldVal){
         if (oldVal){//this is whether the value has changed
             if (textBox.getText().compareTo("") == 0){
@@ -752,7 +744,7 @@ public class Main extends Application {
         return false;
     }
 
-    //this is the same as the range validating textbox just it calls a different validation function
+    //Similar to range validating textbox but calls a different validation function instead
     private TextField newValidatingDoubleTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -761,7 +753,7 @@ public class Main extends Application {
         return tf;
     }
 
-    //checks if a double is valid and outputs error if it is not
+    //Checks if a double is valid and outputs error if isn't
     private boolean validateDouble(String text, boolean oldVal){
         if (oldVal){
             try {
@@ -906,6 +898,7 @@ public class Main extends Application {
         }
     }
 
+    //Speed up/slow down playback
     private void changePlaybackSpeed(){
         speedModifier = Float.parseFloat(speedCB.getValue().substring(0, speedCB.getValue().length()-1));
         if (!paused){
@@ -916,7 +909,7 @@ public class Main extends Application {
         }
     }
 
-
+    //Extracts names of selected headers from TableView
     private String[] headersToStrings(TableView<InputTable> selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
@@ -965,15 +958,11 @@ public class Main extends Application {
             showPopup("Error parsing csv, invalid input on row " + (i+1) + " of " + selectedItemsArr[j]);
             return null;
         }
-
         return datArray;
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
     private float[][] extractDataFromCSVData(String[] selectedItemsArr){
-        /*for (int j = 0; j < csvData.data.length; j++){
-            System.out.println(csvData.headers[j] + ":  " + csvData.data[j][0] + " " + csvData.data[j][1] + " " + csvData.data[j][2]);
-        }*/
         float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
         int[][] offSetArray = new int [selectedItemsArr.length][2];
         for (int j = 0; j < datArray[0].length; j++){
@@ -988,14 +977,14 @@ public class Main extends Application {
         return datArray;
     }
 
-    //Potentially no longer needed
+    //Converts a date and time string to a float (seconds) (roughly)
     private float dateTimeToFloat(String date){
         float outVal;
-        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d\\d\\d:\\d\\d:\\d\\d";
+        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d\\d\\d:\\d\\d:\\d\\d"; //Regex to match datetime format
         if (!date.matches(pattern)){
             return -1f;
         }
-        else{
+        else{ //Convert to seconds
             int years = Integer.parseInt(date.substring(0, 4));
             int months = Integer.parseInt(date.substring(5, 7));
             int days = Integer.parseInt(date.substring(8, 10));
@@ -1013,10 +1002,10 @@ public class Main extends Application {
     //Converts time to float
     private float timeToFloat(String time){
         float outVal;
-        String pattern = "\\d+\\d:\\d\\d:\\d\\d";
-        if (!time.matches(pattern)){// || time.indexOf("-") != -1){ //r̝̮̥͔͎̱̜eg̭̺̰̪e̮̝͕̗̙̗ͅx̨
+        String pattern = "\\d+\\d:\\d\\d:\\d\\d"; //Regex to match time pattern
+        if (!time.matches(pattern)){
             return -1;
-        } else {
+        } else { //Converts into seconds
             int hourLength = time.indexOf(':');
             int minuteStart = hourLength + 1;
             int secondStart = minuteStart + 3;
@@ -1028,12 +1017,12 @@ public class Main extends Application {
         }
     }
 
-    //gets the string after the last dot in a filename
+    //Extracts string after last dot in filename
     private String getFileExtension(String path)
     {
         int i = path.lastIndexOf('.');
         int p = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        if (i > p) {//makes sure its not a directory within the path that has a dot
+        if (i > p) {//Checks it's not a directory within the path that has a dot
             return path.substring(i+1);
         }
         return "";
@@ -1073,16 +1062,18 @@ public class Main extends Application {
             }
         }
     }
-    //creates a csvData object using fillDataArray with all headers selected
+
+    //Creates a csvData object using fillDataArray with all headers selected
     private void fillCSVData(File file, BufferedReader dataReader){
         csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
     }
-    //counts number of rows in the simulation
+
+    //Counts number of rows in the simulation
     private void countRows(File file){
         try{
-            BufferedReader rowReader = new BufferedReader(new FileReader(file));
+            BufferedReader rowReader = new BufferedReader(new FileReader(file)); //opens file
             rowCount = 0;
-            while (rowReader.readLine() != null) {
+            while (rowReader.readLine() != null) { //iterates through and counts rows
                 rowCount++;
             }
             rowReader.close();
@@ -1091,7 +1082,7 @@ public class Main extends Application {
         }
     }
 
-    //takes headers of a file and fills combo box
+    //Takes headers of a file and fills combo box
     private void extractHeaders(File file, BufferedReader reader){
         try {
             reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
@@ -1104,7 +1095,7 @@ public class Main extends Application {
         countRows(file);
     }
 
-    //opens event log into an arrayList of event data objects
+    //Opens event log into an arrayList of event data objects
     private ArrayList<EventData> openEventLog(BufferedReader eventReader)
     {
         ArrayList<EventData> eLog = new ArrayList<>();
@@ -1128,7 +1119,6 @@ public class Main extends Application {
         return eLog;
     }
 
-
     //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
@@ -1141,10 +1131,12 @@ public class Main extends Application {
         }
     }
 
+    //Launcher for JavaFX
     public static void main(String[] args) {
         launch();
     }
 
+    //Terminates timer
     @Override
     public void stop(){
         if (timerStarted) {
