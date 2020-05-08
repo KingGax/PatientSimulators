@@ -18,8 +18,10 @@ import javafx.scene.paint.Paint;
 import javafx.stage.Popup;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -30,7 +32,6 @@ public class GaugeBuilder {
     public Scene getGaugeBuilderScene(Scene defaultScene)
     {
         mainStage = (Stage)defaultScene.getWindow();
-        TilePane testPane = new TilePane();
         BorderPane borderPane = new BorderPane();
         BorderPane editSection = new BorderPane();
         editSection.setBackground(new Background(new BackgroundFill(Color.BLACK, new CornerRadii(10), Insets.EMPTY)));
@@ -99,27 +100,65 @@ public class GaugeBuilder {
         scene.getStylesheets().add("css/gaugeBuilder.css");
         return scene;
     }
-    private void saveCurrentGauge(String filename){
-        if (filename.compareTo("") != 0){
-            try {
-                FileOutputStream fos = new FileOutputStream(filename + ".gauge");
-                ObjectOutputStream dos = new ObjectOutputStream(fos);
-                SGauge s = new SGauge();
-                s.setGauge(currentGauge);
-                dos.writeObject(s);
-                System.out.println("file created: " + filename);
-                dos.flush();
-                fos.close();
-                showPopup("Gauge Saved!");
-            } catch (Exception ef) {
-                ef.printStackTrace();
+    //checks filename is valid by trying to create a file in that location
+    private boolean checkFilenameValid(String filename){
+        for (String i: PureFunctions.UserForbiddenCharacters) {//checks for directory altering characters '.' '/' '\'
+            if (filename.contains(i)){
+                showPopup("Filename cannot contain " + i,true);
+                return false;
             }
         }
+        File newFile = new File(filename);
+        try {
+            newFile.createNewFile();
+            if (newFile.exists()){//checks if filename is a special case forbidden filename like CON
+                newFile.delete();//deletes test file if it exists
+                return true;
+            } else {
+                showPopup(filename + " is a forbidden filename",true);
+                return  false;
+            }
+        } catch (Exception e) {
+            for (String i: PureFunctions.WindowsForbiddenCharacters) {//catches forbidden characters as they cause it to error
+                if (filename.contains(i)){
+                    showPopup("Filename cannot contain " + i,true);
+                    return false;
+                }
+            }
+            showPopup(filename + " is a forbidden filename",true);
+            return false;
+        }
     }
-    //Displays popup with given message
-    private void showPopup(String message) {
+
+    //checks filename is non empty and valid then saves the gauge
+    private void saveCurrentGauge(String filename){
+        if (filename.compareTo("") != 0){
+            if (checkFilenameValid(filename)){//checks filename is valid, popup shown in this function
+                try {
+                    FileOutputStream fos = new FileOutputStream(filename + ".gauge");
+                    ObjectOutputStream dos = new ObjectOutputStream(fos);
+                    SGauge s = new SGauge();//moves gauge into saveable class
+                    s.setGauge(currentGauge);
+                    dos.writeObject(s);
+                    dos.flush();
+                    fos.close();
+                    showPopup("Gauge Saved!",false);
+                } catch (Exception ef) {
+                    ef.printStackTrace();
+                }
+            }
+        }else {
+            showPopup("Please choose a filename",true);
+        }
+    }
+    //Displays popup with given message. Bool for if its an error or a success popup
+    private void showPopup(String message,boolean error) {
         Label popupLabel = new Label(message);
-        popupLabel.getStyleClass().add("pop-up-accept");
+        if (error){
+            popupLabel.getStyleClass().add("pop-up-error");
+        } else {
+            popupLabel.getStyleClass().add("pop-up-accept");
+        }
         popupLabel.setMinWidth(mainStage.getScene().getWidth()); // set size of label
         popupLabel.setMinHeight(50);
         popupLabel.setAlignment(Pos.CENTER);
@@ -127,9 +166,22 @@ public class GaugeBuilder {
         popup.getContent().add(popupLabel);// add the label
         popup.show(mainStage, mainStage.getScene().getWindow().getX() + 8, mainStage.getScene().getWindow().getY() + 30);
     }
-
+    //This function gets all the customisable settings for Tick Marks and puts them in a VBox
     private VBox getTickMarkBox(){
         VBox tickBox = new VBox(10);
+
+        /*
+            The structure here is
+            HBOX/VBOX - box this small feature will go in
+            Title
+            CheckBox/Colour box/Combobox/Text box for input
+            SetOnAction - change how currentGauge looks
+
+            Atomic references are for listeners that allow the box to change validate itself and change its own value
+            The listener checks for when the user unfocuses ("leaves") the text box
+            The on action is for when they press enter
+            Either way it validates the input and updates the current gauge iff it has a valid input
+         */
 
         HBox tickLabelsVisibleHBox = new HBox(5);
         CheckBox tickLabelsVisibleCheckBox = new CheckBox();
@@ -282,9 +334,17 @@ public class GaugeBuilder {
         tickBox.getChildren().addAll(tickLabelsVisibleHBox,tickLabelsInsideHBox,majorTicksVisibleHBox,majorTickShapeVBox,majorTickColorVBox,majorTickWidthVBox,majorTickLengthVBox,mediumTicksVisibleHBox,mediumTickShapeVBox,tickColorVBox,mediumTickWidthVBox,mediumTickLengthVBox,minorTicksVisibleHBox,minorTickShapeVBox,minorTickColorVBox,minorTickWidthVBox,minorTickLengthVBox);
         return tickBox;
     }
-
+    //gets the box with the other options
     private VBox getOtherBox(){
         VBox otherBox = new VBox(10);
+
+           /*
+            The structure here is
+            HBOX/VBOX - box this small feature will go in
+            Title
+            CheckBox/Colour box/Combobox/Text box for input
+            SetOnAction - change how currentGauge looks
+         */
 
         VBox needleTypeVBox = new VBox(0);
         ComboBox<String> needleTypeComboBox = new ComboBox<>();
@@ -308,7 +368,7 @@ public class GaugeBuilder {
         Label knobTypeLabel = new Label("Knob Type");
         knobTypeLabel.getStyleClass().add("headings-gb-label");
         knobTypeVBox.getChildren().addAll(knobTypeLabel,knobTypeComboBox);
-        knobTypeComboBox.setOnAction(e->currentGauge.setKnobType(PureFunctions.translateStringToknobType(knobTypeComboBox.getValue())));
+        knobTypeComboBox.setOnAction(e->currentGauge.setKnobType(PureFunctions.translateStringToKnobType(knobTypeComboBox.getValue())));
 
         HBox ledVisibleHBox = new HBox(5);
         CheckBox ledVisibleCheckBox = new CheckBox();
@@ -343,6 +403,8 @@ public class GaugeBuilder {
         return otherBox;
 
     }
+    //Validates that a double is a valid tick factor (a double betwen 0 and 1)
+    //sets the tickbox to its old value if it isnt
     private boolean validateTickFactor(TextField tickBox,boolean oldVal,String oldValue){
         if (oldVal){
             try {
@@ -350,17 +412,32 @@ public class GaugeBuilder {
                 if (newV <= 1 && newV >= 0){
                     return true;
                 } else {
-                    tickBox.setText(oldValue);
+                    tickBox.setText(oldValue);//sets to old value if not between 0 and 1
                 }
             } catch (NumberFormatException e) {
-                tickBox.setText(oldValue);
+                tickBox.setText(oldValue);//sets to old value if not double
             }
         }
         return false;
     }
+    //gets the VBox for colour settings
     private VBox getColourBox(){
+
+        /*
+            The structure here is
+            HBOX/VBOX - box this small feature will go in
+            Title
+            CheckBox/Colour box/Combobox/Text box for input
+            SetOnAction - change how currentGauge looks
+
+            Atomic references are for listeners that allow the box to change validate itself and change its own value
+            The listener checks for when the user unfocuses ("leaves") the text box
+            The on action is for when they press enter
+            Either way it validates the input and updates the current gauge iff it has a valid input
+            Used for border width
+         */
+
         VBox colourBox = new VBox(10);
-        AtomicReference<String> oldTextValue = new AtomicReference<>("");
         VBox needleColourVBox = new VBox(0);
         ColorPicker needleColourPicker = new ColorPicker();
         needleColourPicker.setValue(Color.BLACK);
@@ -431,6 +508,9 @@ public class GaugeBuilder {
         borderColorPicker.setValue(Color.BLACK);
         Label borderColorLabel = new Label("Border Colour");
         borderColorLabel.getStyleClass().add("headings-gb-label");
+        borderColorPicker.setOnAction(e->currentGauge.setBorderPaint(borderColorPicker.getValue()));
+
+        AtomicReference<String> oldTextValue = new AtomicReference<>("");
         Label borderWidthLabel = new Label("Border Width");
         borderWidthLabel.getStyleClass().add("headings-gb-label");
         borderWidthLabel.setPadding(new Insets(5,0,0,0));
@@ -439,19 +519,20 @@ public class GaugeBuilder {
         borderWidthText.focusedProperty().addListener((obs, oldVal, newVal) -> validateAndUpdateWidth(borderWidthText,oldVal, oldTextValue.get()));
         borderWidthText.setOnAction(e->{validateAndUpdateWidth(borderWidthText,true,oldTextValue.get());oldTextValue.set(borderWidthText.getText());});
         borderColorVBox.getChildren().addAll(borderColorLabel,borderColorPicker,borderWidthLabel,borderWidthText);
-        borderColorPicker.setOnAction(e->currentGauge.setBorderPaint(borderColorPicker.getValue()));
+        //adds all children to colourbox
         colourBox.getChildren().addAll(backgroundPaintVBox,borderColorVBox,titleColourBox,valueColorVBox,unitColourBox,needleColourVBox,knobColorVBox,tickLabelColorVBox,modernTickColourVBox);
 
         return colourBox;
 
     }
+    //Checks border width is valid and updates it if it is. Otherwise reverts to old value.
     private void validateAndUpdateWidth(TextField widthBox,boolean oldVal,String oldValue){
         if (oldVal){
             try {
                 double newV = Double.parseDouble(widthBox.getText());
                 if (newV <= 50 && newV >= 0){
                     currentGauge.setBorderWidth(newV);
-                } else {
+                } else {//catch and else revert to old value string
                     widthBox.setText(oldValue);
                 }
             } catch (NumberFormatException e) {
@@ -459,6 +540,7 @@ public class GaugeBuilder {
             }
         }
     }
+    //This saves all values that we alter and then updates the skin. This is so that the values saved are never changed by the gauge setting defaults on skin change
     private void updateCurrentGaugeSkin(Gauge.SkinType skin){
         Color needleColour = currentGauge.getNeedleColor();
         Paint backgroundPaint = currentGauge.getBackgroundPaint();
@@ -491,6 +573,7 @@ public class GaugeBuilder {
         double majorTickLength = currentGauge.getMajorTickMarkLengthFactor();
         boolean tickLabelsVisible = currentGauge.getTickLabelsVisible();
         TickLabelLocation tickLabelLocation = currentGauge.getTickLabelLocation();
+        //GAUGE SETS SOME DEFAULTS ON SKIN CHANGE - this is why we save so many values. It also gaurentees what is saved is what is shown on screen
         currentGauge.setSkinType(skin);
         currentGauge.setNeedleColor(needleColour);
         currentGauge.setBackgroundPaint(backgroundPaint);
@@ -522,8 +605,6 @@ public class GaugeBuilder {
         currentGauge.setMinorTickMarkLengthFactor(minorTickLength);
         currentGauge.setTickLabelsVisible(tickLabelsVisible);
         currentGauge.setTickLabelLocation(tickLabelLocation);
-        currentGauge.addSection(new Section(0,20,Color.GREEN));
-        currentGauge.addArea(new Section(20,40,Color.RED));
     }
 
 }

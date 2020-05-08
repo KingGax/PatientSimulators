@@ -58,7 +58,7 @@
         <dependency>
             <groupId>eu.hansolo</groupId>
             <artifactId>Medusa</artifactId>
-            <version>11.4</version>
+            <version>11.5</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>

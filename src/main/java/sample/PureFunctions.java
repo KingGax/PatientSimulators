@@ -4,7 +4,10 @@ import eu.hansolo.medusa.Gauge;
 import eu.hansolo.medusa.TickMarkType;
 import eu.hansolo.medusa.skins.GaugeSkin;
 
+//Functions to retrieve default values for headers and gauge properties
 class PureFunctions {
+    static String[] UserForbiddenCharacters = {".","/","\\"};
+    static String[] WindowsForbiddenCharacters = {"<",">",":","\"","/","\\","|","?","*"};
     static String skinTypeToString(Gauge.SkinType type) {
         switch (type) {
             case SLIM:
@@ -25,6 +28,8 @@ class PureFunctions {
                 return "Vertical Half";
             case GAUGE:
                 return "Default Gauge";
+            case LEVEL:
+                return "Cylinder";
             default:
                 return null;
         }
@@ -317,6 +322,8 @@ class PureFunctions {
                 return Gauge.SkinType.VERTICAL;
             case "Default Gauge":
                 return Gauge.SkinType.GAUGE;
+            case "Cylinder":
+                return Gauge.SkinType.LEVEL;
             default:
                 return null;
         }
@@ -373,7 +380,7 @@ class PureFunctions {
         }
     }
 
-    public static Gauge.KnobType translateStringToknobType(String str) {
+    public static Gauge.KnobType translateStringToKnobType(String str) {
         switch (str){
             case "Flat":
                 return Gauge.KnobType.FLAT;

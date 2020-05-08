@@ -1,7 +1,6 @@
 package sample;
 
 import eu.hansolo.medusa.Gauge;
-import eu.hansolo.medusa.GaugeBuilder;
 import eu.hansolo.medusa.Section;
 import eu.hansolo.medusa.TickLabelLocation;
 import javafx.application.Application;
@@ -25,6 +24,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Popup;
@@ -68,18 +68,34 @@ public class Main extends Application {
     private Stage mainStage;
     private CSVData csvData;
     private String[] headerNames;
-    private ArrayList<String> loadedGaugeNames = new ArrayList<String>();
-    private ArrayList<SGauge> loadedGaugeParameters = new ArrayList<SGauge>();
+    private GaugeManager gaugeManager;
     @Override
 
     //Initial scene setup
     public void start(Stage stage) {
+        /*Setting up all elements on the setup page
+        Title - Top header
+        typeChooserTemplate - An item that will be cloned for every header added to the table
+        fileChooser - The file browser object that will be passed around
+        popup - global variable that will be styled and used as a default popup
+        selectedHeaderTitles - The tableview that will store simulation details
+
+        ## For Every button we setOnAction which calls these functions:
+        tryAddHeader - Will add a new header if it doesn't already exist
+        trySaveSimulation - Will create a popup make sure simulation is valid then save it to that filename
+        tryLoadSimulation - Will open a filepicker to let you load a .sim file
+        openFile - Opens data and events log, depending on the bool you give it
+        addCustomGaugeOption - Opens the file chooser and tried to load in a custom gauge
+         */
+
+        gaugeManager = new GaugeManager(new ArrayList<String>(), new ArrayList<SGauge>());
         mainStage = stage;
         dataReader = null;
         popup = new Popup();
         popup.setAutoHide(true);
         typeChooserTemplate = new ComboBox<>();
-        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph");
+        //setting style classes and initialising style classes
+        typeChooserTemplate.getItems().addAll("Default Gauge","Simple Section","Line Graph","Cylinder");
         FileChooser fileChooser = new FileChooser();
         Label title = new Label("Welcome to Patient Simulators");
         title.getStyleClass().add("title");
@@ -101,10 +117,13 @@ public class Main extends Application {
         Button customGaugeButton = new Button("Add Custom Gauge");
         customGaugeButton.setOnAction(e -> addCustomGaugeOption(fileChooser,stage));
         customGaugeButton.getStyleClass().add("button-yellow");
+
         saveSimulationButton.setOnAction(e -> trySaveSimulation());
         loadSimulationButton.setOnAction(e -> tryLoadSimulation(fileChooser));
         fileSelectorButton.setOnAction(e -> openFile(fileChooser,stage,false));
         eventLogSelecter.setOnAction(e -> openFile(fileChooser,stage,true));
+
+        //Setup layout on the page with gridPanes and hboxes
         GridPane selectedHeaders = new GridPane();
         selectedHeaderTitles = new TableView<>();
         selectedHeaderTitles.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
@@ -149,89 +168,95 @@ public class Main extends Application {
         stage.setScene(welcome);
         stage.setTitle("Patient Simulators");
         fileChooser.setTitle("Open Resource File");
-        simulationButton.setOnAction(e->tryRunSimulation(stage,welcome));
         borderPane.setTop(header);
         borderPane.setId("background");
+
+        simulationButton.setOnAction(e->tryRunSimulation(stage,welcome));
+
+        //Setting up the main tableview columns
         TableColumn<InputTable, String> headerName = new TableColumn<>();
         headerName.setMinWidth(40);
         headerName.setText("Heading");
         headerName.getStyleClass().add("table-heads");
         headerName.setCellValueFactory(new PropertyValueFactory<>("headerName"));
+
         TableColumn<InputTable, ComboBox<String>> dataType = new TableColumn<>();
         dataType.setMinWidth(110);
         dataType.setCellValueFactory(new PropertyValueFactory<>("options"));
         dataType.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> minVal = new TableColumn<>();
         minVal.setMinWidth(50);
         minVal.setCellValueFactory(new PropertyValueFactory<>("min"));
         minVal.setText("Min");
         minVal.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> maxVal = new TableColumn<>();
         maxVal.setMinWidth(50);
         maxVal.setCellValueFactory(new PropertyValueFactory<>("max"));
         maxVal.setText("Max");
         maxVal.getStyleClass().add("table-heads");
         dataType.setText("Gauge Type");
+
         TableColumn<InputTable, TextField> amberSection = new TableColumn<>();
         amberSection.setMinWidth(80);
         amberSection.setCellValueFactory(new PropertyValueFactory<>("amber"));
         amberSection.setText("Amber Section");
         amberSection.getStyleClass().add("table-heads");
+
         TableColumn<InputTable, TextField> greenSection = new TableColumn<>();
         greenSection.setMinWidth(80);
         greenSection.setCellValueFactory(new PropertyValueFactory<>("green"));
         greenSection.setText("Green Section");
         greenSection.getStyleClass().add("table-heads");
+
         gaugeButton.setOnMouseClicked(e-> stage.setScene(gb.getGaugeBuilderScene(welcome)));
         selectedHeaderTitles.getColumns().addAll(headerName, dataType,minVal,maxVal,amberSection,greenSection);
+
+        stage.getIcons().add(new Image("res/Patient_Simulator_Logo.png"));
         stage.show();
     }
 
+    //Opens file browser and loads a custom gauge into memory, adding it to the gauge[] array
     private void addCustomGaugeOption(FileChooser fileChooser,Stage stage){
-        File file = fileChooser.showOpenDialog(stage);
+        fileChooser.setTitle("Select Custom Gauge");
+        File workingDirectory = new File(System.getProperty("user.dir"));
+        fileChooser.setInitialDirectory(workingDirectory);
+        File file = fileChooser.showOpenDialog(stage);//open file chooser
         if (file != null) {
-            if (getFileExtension(file.getPath()).compareTo("gauge") == 0){
-                typeChooserTemplate.getItems().add(file.getPath());
-                for (InputTable item:selectedHeaderTitles.getItems() ) {
-                    item.getOptions().getItems().add(file.getName().split("\\.")[0]);
+            if (getFileExtension(file.getPath()).compareTo("gauge") == 0){//check it is a gauge file
+                typeChooserTemplate.getItems().add(file.getName().split("\\.")[0]);//adds the name of the gauge name to the template
+                if (selectedHeaderTitles.getItems().size()>0){
+                    for (InputTable item:selectedHeaderTitles.getItems() ) {//adds the item to the comboboxes already inside the table
+                        item.getOptions().getItems().add(file.getName().split("\\.")[0]);
+                    }
                 }
-                loadInGauge(file);
+                gaugeManager.loadInGauge(file);//loads in the file and adds it to gauge[] array
             } else {
                 showPopup("Please select a .gauge file");
             }
         }
     }
 
-    private void loadInGauge(File file) {
-        try {
-            FileInputStream fis = new FileInputStream(file.getPath());
-            ObjectInputStream dis = new ObjectInputStream(fis);
-            SGauge gauge = (SGauge) dis.readObject();
-            loadedGaugeNames.add(file.getName().split("\\.")[0]);
-            loadedGaugeParameters.add(gauge);
-        } catch (Exception e) {
-
-        }
-
-    }
-
+    //Tries to load in a simulation
     private void tryLoadSimulation(FileChooser fileChooser){
         try {
+            fileChooser.setTitle("Select Simulation");
             File workingDirectory = new File(System.getProperty("user.dir"));
             fileChooser.setInitialDirectory(workingDirectory);
-            File file = fileChooser.showOpenDialog(mainStage);
-            if (getFileExtension(file.getPath()).compareTo("sim") == 0){
-                FileInputStream fis = new FileInputStream(file);
+            File file = fileChooser.showOpenDialog(mainStage); //open directory
+            if (getFileExtension(file.getPath()).compareTo("sim") == 0){//checks correct file
+                FileInputStream fis = new FileInputStream(file);//reads in file
                 ObjectInputStream dis = new ObjectInputStream(fis);
                 SimulationParameters sim = (SimulationParameters) dis.readObject();
-                csvData = sim.getCsvData();
+                csvData = sim.getCSVData();//extract data from sim into the program
                 HeaderParameters[] headerData = sim.getHeaders();
                 eventLog = sim.getEventLog();
-                eventsSelected = (eventLog.size() != 0);
-                loadedGaugeNames = sim.getCustomNames();
-                loadedGaugeParameters = sim.getCustomGauges();
+                eventsSelected = (eventLog.size() != 0);//sets whether events log is empty or not
+                gaugeManager.setGaugeNames(sim.getCustomNames());//sets list of custom names
+                gaugeManager.setGaugeParameters(sim.getCustomGauges());//sets list of custom presets
                 rowCount = csvData.data.length;
-                updateTablesWithLoadedSimulation(csvData.headers,headerData);
+                updateTablesWithLoadedSimulation(csvData.headers,headerData);//populates table and combo box
             } else {
                 showPopup("Please select a .sim file");
             }
@@ -241,20 +266,21 @@ public class Main extends Application {
             System.out.println("we;re out "+ef);
 
         }
-
     }
+
+    //Fills table when simulation loaded
     private void updateTablesWithLoadedSimulation(String[] allHeaders, HeaderParameters[] headerSettings){
         headerPicker.getItems().clear();
         selectedHeaderTitles.getItems().clear();
-        for (String customGaugeName:loadedGaugeNames ) {
+        for (String customGaugeName:gaugeManager.getGaugeNames() ) {//adds custom gauges to template
             typeChooserTemplate.getItems().add(customGaugeName);
         }
-        for (String currentItem : allHeaders) {
+        for (String currentItem : allHeaders) {//fils out header selection box
             if (!currentItem.equals("PatientTime") && !currentItem.equals("SCETime") && !currentItem.equals("WorldTime")) {
                 headerPicker.getItems().add(currentItem);
             }
         }
-        for (HeaderParameters h : headerSettings) {
+        for (HeaderParameters h : headerSettings) {//fills out the table with all saved headers
                 ComboBox<String> typePicker = new ComboBox<>();
                 typePicker.getItems().addAll(typeChooserTemplate.getItems());
                 typePicker.getSelectionModel().select(h.getGaugeType());
@@ -266,40 +292,51 @@ public class Main extends Application {
         }
         headerPicker.getSelectionModel().selectFirst();
     }
+
+    //Checks simulation can be run
     private boolean validateSimulationInputs(){
-        if (selectedHeaderTitles.getItems().size() < 1){
+        if (csvData == null){//checks data log loaded
+            showPopup("Please load in a valid data array");
+            return false;
+        }
+        if (selectedHeaderTitles.getItems().size() < 1){//checks a header selected
             showPopup("Please select at least one header");
             return false;
         }
-        for (InputTable row: selectedHeaderTitles.getItems()) {
+        for (InputTable row: selectedHeaderTitles.getItems()) {//runs validation on every row
             try {
                 double min, max, amber1, amber2, green1, green2;
                 min = Double.parseDouble(row.getMin().getText());
                 max = Double.parseDouble(row.getMax().getText());
-                String[] amberVals = row.getAmber().getText().split(",");
-                amber1 = Double.parseDouble(amberVals[0]);
-                amber2 = Double.parseDouble(amberVals[1]);
-                String[] greenVals = row.getGreen().getText().split(",");
-                green1 = Double.parseDouble(greenVals[0]);
-                green2 = Double.parseDouble(greenVals[1]);
-                if (green1 > green2) {
-                    showPopup("The first number in green on row " + row.getHeaderName() + " should be smaller than the second");
-                    return false;
+                if (row.getAmber().getText().compareTo("") != 0){//if section is added
+                    String[] amberVals = row.getAmber().getText().split(",");
+                    amber1 = Double.parseDouble(amberVals[0]);
+                    amber2 = Double.parseDouble(amberVals[1]);
+                    if (amber1 > amber2){
+                        showPopup("The first number in amber on row " + row.getHeaderName() + " should be smaller than the second");
+                        return false;
+                    }
+                    if (amber1 > max || amber1 < min || amber2 > max || amber2 < min){
+                        showPopup("Amber ranges do not fall within the gauge range on row " + row.getHeaderName());
+                        return false;
+                    }
                 }
-                if (amber1 > amber2){
-                    showPopup("The first number in amber on row " + row.getHeaderName() + " should be smaller than the second");
-                    return false;
+                if (row.getGreen().getText().compareTo("") != 0){//if section is added
+                    String[] greenVals = row.getGreen().getText().split(",");
+                    green1 = Double.parseDouble(greenVals[0]);
+                    green2 = Double.parseDouble(greenVals[1]);
+                    if (green1 > green2) {
+                        showPopup("The first number in green on row " + row.getHeaderName() + " should be smaller than the second");
+                        return false;
+                    }
+                    if (green1 > max || green1 < min || green2 > max || green2 < min){
+                        showPopup("Green ranges do not fall within the gauge range on row " + row.getHeaderName());
+                        return false;
+                    }
                 }
+
                 if (max < min) {
                     showPopup("Min is larger than max on row " + row.getHeaderName());
-                    return false;
-                }
-                if (green1 > max || green1 < min || green2 > max || green2 < min){
-                    showPopup("Green ranges do not fall within the gauge range on row " + row.getHeaderName());
-                    return false;
-                }
-                if (amber1 > max || amber1 < min || amber2 > max || amber2 < min){
-                    showPopup("Amber ranges do not fall within the gauge range on row " + row.getHeaderName());
                     return false;
                 }
 
@@ -310,82 +347,89 @@ public class Main extends Application {
         }
         return true;
     }
+
+    //Checks if the file can be created
+    private boolean checkFilenameValid(String filename){
+        for (String i: PureFunctions.UserForbiddenCharacters) {//checks for characters that would change how the file is saved, --> / . or \
+            if (filename.contains(i)){
+                showPopup("Filename cannot contain " + i);
+                return false;
+            }
+        }
+        File newFile = new File(filename);
+        try {
+            newFile.createNewFile();//creates file with filename
+            if (newFile.exists()){//if location is ok it deletes
+                newFile.delete();
+                return true;//therefore file is valid
+            } else { //if it does not exist windows has not let them create the file for whatever reason
+                showPopup(filename + " is a forbidden filename");
+                return  false;
+            }
+        } catch (Exception e) {//if it crashes it contains an invalid character, one that windows forbids
+            for (String i: PureFunctions.WindowsForbiddenCharacters) {
+                if (filename.contains(i)){
+                    showPopup("Filename cannot contain " + i);
+                    return false;
+                }
+            }
+            showPopup(filename + " is a forbidden filename");
+            return false;
+        }
+    }
+
+    //Attempts to save simulation presets
     private void trySaveSimulation(){
         TextInputDialog textInput = new TextInputDialog();
         textInput.setTitle("Choose filename");
         textInput.getDialogPane().setContentText("Please choose a filename:");
         textInput.setHeaderText("Save file");
         textInput.setGraphic(null);
-        Optional<String> result = textInput.showAndWait();
+        Optional<String> result = textInput.showAndWait();//shows popup
         TextField input = textInput.getEditor();
-        if (input.getText() != null && input.getText().length() != 0){
-            if (validateSimulationInputs()){
-                int numGauges = selectedHeaderTitles.getItems().size();
-                HeaderParameters[] headers = new HeaderParameters[numGauges];
-                int count = 0;
-                for (InputTable row: selectedHeaderTitles.getItems() ) {
-                    headers[count] = new HeaderParameters(row);
-                    count++;
-                }
-                try {
-                    FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
-                    ObjectOutputStream dos = new ObjectOutputStream(fos);
-                    dos.writeObject(new SimulationParameters(headers,csvData,eventLog,loadedGaugeParameters,loadedGaugeNames));
-                    System.out.println("file created: " + result.get());
-                    dos.flush();
-                    fos.close();
+        if (input.getText() != null && input.getText().length() != 0){//checks something non null has been input
+            if(checkFilenameValid(input.getText())){//validates filename
+                if (validateSimulationInputs()){//validates input
+                    int numGauges = selectedHeaderTitles.getItems().size();
+                    HeaderParameters[] headers = new HeaderParameters[numGauges];//sets up array to store gauge related values
+                    int count = 0;
+                    for (InputTable row: selectedHeaderTitles.getItems() ) {//turns rows into saveable objects
+                        headers[count] = new HeaderParameters(row);
+                        count++;
+                    }
+                    try {//package all information into saveable SimulationParameters class and saves
+                        FileOutputStream fos = new FileOutputStream(result.get() + ".sim");
+                        ObjectOutputStream dos = new ObjectOutputStream(fos);
+                        dos.writeObject(new SimulationParameters(headers,csvData,eventLog, gaugeManager.getGaugeParameters(),gaugeManager.getGaugeNames()));
+                        System.out.println("file created: " + result.get());
+                        dos.flush();
+                        fos.close();
 
-                } catch (Exception ef) {
-                    ef.printStackTrace();
+                    } catch (Exception ef) {
+                        ef.printStackTrace();
+                    }
                 }
-
             }
-
         } else {
             showPopup("Please enter a filename");
         }
-
     }
 
-
-    private void setDefaultGaugeCustomisation(Gauge gauge){
-        gauge.setBackgroundPaint(Color.WHITE);
-        gauge.setMajorTickMarkLengthFactor(0.6);
-        gauge.setMediumTickMarkLengthFactor(0.6);
-        gauge.setMinorTickMarkLengthFactor(0.5);
-        gauge.setBorderWidth(0.4);
-        gauge.setBorderPaint(Color.BLACK);
-        gauge.setLedVisible(true);
-        gauge.setLedBlinking(true);
-        gauge.setLedOn(true);
-        gauge.setLedColor(Color.GREEN);
-        gauge.setNeedleType(Gauge.NeedleType.AVIONIC);
-        gauge.setKnobType(Gauge.KnobType.PLAIN);
-        //gauge.setMinorTickMarksVisible(false);
-    }
-
-    //Checks at least one header has been selected
-    private void tryRunSimulation(Stage stage,Scene welcome)
-    {
-        if (validateSimulationInputs())
-        {
-            stage.setScene(getDashboardScene(welcome));
+    //Checks simulation can be run and calls dashboard scene
+    private void tryRunSimulation(Stage stage,Scene welcome) {
+        if (validateSimulationInputs()) {
+            stage.setScene(getDashboardScene(welcome));//updates scene
             for (Gauge gauge : gauges){
-                if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.4
-                    double firstValue = gauge.getCurrentValue();
-                        for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
-                            gauge.setValue(firstValue);
-                            gauge.setValue(firstValue * 0.99999);
-                        }
+                if (gauge.getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){//this must be done while the lines are on screen in v11.5 due to an strange library bug
+                    double firstValue = gauge.getCurrentValue();//this is filling the line graphs data array
+                    for (int j = 0; j < gauge.getAveragingPeriod(); j++) {
+                        gauge.setValue(firstValue);
+                        gauge.setValue(firstValue * 0.99999);
+                    }
                 }
             }
             stage.setMaximized(true);
             paused = false;
-            speedModifier = 1;
-        }
-        else
-        {
-            showPopup("Choose at least one header to display");
         }
     }
 
@@ -405,7 +449,7 @@ public class Main extends Application {
     private void initialiseGauges(TableView<InputTable>selectedItems, GridPane pane){
         gauges = new ArrayList<>();
         int numGauges = selectedItems.getItems().size();
-        int numColumns = 3; //arbitrary guesses atm
+        int numColumns = 3; //arbitrary guesses atm this decides the layout of gauges on screen
         if (numGauges > 6) numColumns = 4;
         if (numGauges >=10) numColumns = 5;
         if (numGauges >=12) numColumns = 6;
@@ -414,16 +458,16 @@ public class Main extends Application {
         for (int i = 0; i < selectedItems.getItems().size(); i++){
             Gauge.SkinType type = PureFunctions.translateStringToGaugeType(selectedItems.getItems().get(i).selectedValue());
             Gauge gauge;
-            if (type != null){
-                gauge = buildGauge(type,selectedItems.getItems().get(i));
+            if (type != null){//this checks whether the name exists already or not, if it exists in the system then it will create it. Otherwise it's custom
+                gauge = gaugeManager.buildGauge(type,selectedItems.getItems().get(i), csvData);
             } else {
-                gauge = buildCustomGauge(selectedItems.getItems().get(i));
+                gauge = gaugeManager.buildCustomGauge(selectedItems.getItems().get(i), csvData);
             }
-            double[] sections = parseSectionData(selectedItems.getItems().get(i));
-            addSections(sections,gauge);
-            gauge.calcAutoScale();
+            double[] sections = parseSectionData(selectedItems.getItems().get(i));//takes section data out of the values and adds red to it
+            gauge.calcAutoScale();//calculates the number of ticks on the gauge
+            addSections(sections,gauge);//adds sections
             gauge.setPrefSize(800,800);
-            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);
+            VBox gaugeBox = getTopicBox(selectedItems.getItems().get(i).headerName, Color.rgb(77,208,225), gauge);//puts the gauges into boxes that will be displayed on screen
             pane.add(gaugeBox,i %numColumns, i/numColumns);
             gauges.add(gauge);
         }
@@ -432,163 +476,13 @@ public class Main extends Application {
         pane.setVgap(15);
         pane.setBackground(new Background(new BackgroundFill(Color.BLACK, CornerRadii.EMPTY, Insets.EMPTY)));
         eventTimer = new Timer();
-        TimerTask task = new EventTimerTask(this);
+        TimerTask task = new EventTimerTask(this);//begin event timer for updating gauges
         eventTimer.scheduleAtFixedRate(task, 0,(int)(updateFrequency/speedModifier));
         timerStarted = true;
     }
 
-    private Gauge buildCustomGauge(InputTable data){
-        Gauge newGauge;
-        double maxValue, minValue;
-        try {
-            maxValue = Integer.parseInt(data.getMax().getText());
-        }catch(Exception e){
-            maxValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        try {
-            minValue = Integer.parseInt(data.getMin().getText());
-        }catch(Exception e){
-            minValue = PureFunctions.getMinValue(data.headerName);
-        }
-        try {
-            Gauge customisations = loadedGaugeParameters.get(loadedGaugeNames.indexOf(data.getOptions().getValue())).getGauge();
-            GaugeBuilder builder = GaugeBuilder.create().skinType(customisations.getSkinType());
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).build();
-            updateCurrentGaugeSkin(newGauge,customisations);
-            newGauge.setLedOn(true);
-            newGauge.calcAutoScale();
-            setupLineGraph(newGauge,data.getHeaderName());
-            return newGauge;
-        } catch (Exception ef) {
-            System.out.println(ef);
-            return buildGauge(Gauge.SkinType.MODERN,data);
-        }
-    }
-
-    private void updateCurrentGaugeSkin(Gauge currentGauge, Gauge oldGauge ){
-        Color needleColour = oldGauge.getNeedleColor();
-        Paint backgroundPaint = oldGauge.getBackgroundPaint();
-        Paint borderColour = oldGauge.getBorderPaint();
-        double borderWidth = oldGauge.getBorderWidth();
-        Color titleColour = oldGauge.getTitleColor();
-        Color unitColour = oldGauge.getUnitColor();
-        Color majorTickColour = oldGauge.getMajorTickMarkColor();
-        Color minorTickColour = oldGauge.getMinorTickMarkColor();
-        Color mediumTickColour = oldGauge.getMediumTickMarkColor();
-        Color valueColour = oldGauge.getValueColor();
-        Color knobColour = oldGauge.getKnobColor();
-        Color tickLabelColour = oldGauge.getTickLabelColor();
-        Gauge.NeedleType needleType = oldGauge.getNeedleType();
-        Gauge.NeedleShape needleShape = oldGauge.getNeedleShape();
-        Gauge.KnobType knobType = oldGauge.getKnobType();
-        boolean ledVisible = oldGauge.isLedVisible();
-        boolean ledBlinking = oldGauge.isLedBlinking();
-        boolean minorTicksVisible = oldGauge.getMinorTickMarksVisible();
-        boolean mediumTicksVisible = oldGauge.getMediumTickMarksVisible();
-        boolean majorTicksVisible = oldGauge.getMajorTickMarksVisible();
-        Color modernTickColour = oldGauge.getTickMarkColor();
-        Gauge.LedType ledType = oldGauge.getLedType();
-        Color ledColour = oldGauge.getLedColor();
-        double minorTickWidth = oldGauge.getMinorTickMarkWidthFactor();
-        double minorTickLength = oldGauge.getMinorTickMarkLengthFactor();
-        double mediumTickWidth = oldGauge.getMediumTickMarkWidthFactor();
-        double mediumTickLength = oldGauge.getMediumTickMarkLengthFactor();
-        double majorTickWidth = oldGauge.getMajorTickMarkWidthFactor();
-        double majorTickLength = oldGauge.getMajorTickMarkLengthFactor();
-        boolean tickLabelsVisible = oldGauge.getTickLabelsVisible();
-        TickLabelLocation tickLabelLocation = oldGauge.getTickLabelLocation();
-        currentGauge.setNeedleColor(needleColour);
-        currentGauge.setBackgroundPaint(backgroundPaint);
-        currentGauge.setBorderPaint(borderColour);
-        currentGauge.setBorderWidth(borderWidth);
-        currentGauge.setTitleColor(titleColour);
-        currentGauge.setUnitColor(unitColour);
-        currentGauge.setMajorTickMarkColor(majorTickColour);
-        currentGauge.setMinorTickMarkColor(minorTickColour);
-        currentGauge.setMediumTickMarkColor(mediumTickColour);
-        currentGauge.setKnobColor(knobColour);
-        currentGauge.setValueColor(valueColour);
-        currentGauge.setTickLabelColor(tickLabelColour);
-        currentGauge.setNeedleType(needleType);
-        currentGauge.setNeedleShape(needleShape);
-        currentGauge.setKnobType(knobType);
-        currentGauge.setLedVisible(ledVisible);
-        currentGauge.setLedType(ledType);
-        currentGauge.setLedBlinking(ledBlinking);
-        currentGauge.setLedColor(ledColour);
-        currentGauge.setMajorTickMarksVisible(majorTicksVisible);
-        currentGauge.setMinorTickMarksVisible(minorTicksVisible);
-        currentGauge.setMediumTickMarksVisible(mediumTicksVisible);
-        currentGauge.setTickMarkColor(modernTickColour);
-        currentGauge.setMediumTickMarkLengthFactor(mediumTickLength);
-        currentGauge.setMediumTickMarkWidthFactor(mediumTickWidth);
-        currentGauge.setMajorTickMarkLengthFactor(majorTickLength);
-        currentGauge.setMajorTickMarkWidthFactor(majorTickWidth);
-        currentGauge.setMinorTickMarkWidthFactor(minorTickWidth);
-        currentGauge.setMinorTickMarkLengthFactor(minorTickLength);
-        currentGauge.setTickLabelsVisible(tickLabelsVisible);
-        currentGauge.setTickLabelLocation(tickLabelLocation);
-    }
-
-
-    private Gauge buildGauge(Gauge.SkinType type, InputTable data){
-        Gauge newGauge = null;
-        double maxValue, minValue;
-        int decimals = PureFunctions.getDecimals(data.headerName);
-        int tickLabelDecimals;
-        tickLabelDecimals = decimals - 1;
-        if (decimals > 1) tickLabelDecimals = decimals;
-        try {
-            maxValue = Double.parseDouble(data.getMax().getText());
-        }catch(Exception e){
-            maxValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        try {
-            minValue = Double.parseDouble(data.getMin().getText());
-        }catch(Exception e){
-            minValue = PureFunctions.getMaxValue(data.headerName);
-        }
-        GaugeBuilder builder = GaugeBuilder.create();
-        if (type == Gauge.SkinType.SIMPLE_SECTION){
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.SIMPLE_SECTION).build();
-            newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setValueColor(Color.WHITE);
-            newGauge.setTitleColor(Color.WHITE);
-            newGauge.setUnitColor(Color.WHITE);
-            newGauge.setBarBackgroundColor(Color.GRAY);
-            newGauge.setAnimated(true);
-        } else if (type == Gauge.SkinType.TILE_SPARK_LINE) {
-            newGauge = builder.decimals(PureFunctions.getDecimals(data.headerName)).minValue(minValue).maxValue(maxValue).unit(PureFunctions.getUnit(data.headerName)).autoScale(true).decimals(PureFunctions.getDecimals(data.headerName)).skinType(Gauge.SkinType.TILE_SPARK_LINE).build();
-            newGauge.setBarColor(Color.rgb(77,208,225));
-            newGauge.setBarBackgroundColor(Color.WHITE);
-            newGauge.setAnimated(true);
-            setupLineGraph(newGauge,data.headerName);
-            return newGauge;
-        }
-        newGauge = builder.decimals(decimals).tickLabelDecimals(tickLabelDecimals).maxValue(maxValue).minValue(minValue).unit(PureFunctions.getUnit(data.headerName)).skinType(Gauge.SkinType.GAUGE).build();
-        setDefaultGaugeCustomisation(newGauge);
-        return newGauge;
-    }
-
-    private void setupLineGraph(Gauge newGauge,String headerName){
-        int numPoints = 150;
-        double firstPoint = csvData.data[0][getNameIndex(headerName,csvData.headers)];
-        newGauge.setValue(firstPoint);
-        newGauge.setAveragingEnabled(true);
-        newGauge.setAveragingPeriod(numPoints);
-        newGauge.setTitle(headerName);
-    }
-
-    private int getNameIndex(String name, String[] headers){
-        for (int i = 0; i < headers.length; i++) {
-            if (headers[i].compareTo(name) == 0){
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private void addSections(double[] sections,Gauge newGauge){ //sections laid out as [amber1,green1,green2,amber2]
+    //Sections laid out as [amber1,green1,green2,amber2]
+    private void addSections(double[] sections,Gauge newGauge){
         if (!(sections[0] == 0 && sections[1] == 0 && sections[2] == 0 && sections[3] == 0)) {//checks there is at least one section
             if (sections[0] == 0 && sections[3] == 0){//no amber section so add just green
                 newGauge.addSection(new Section(sections[1],sections[2],Color.GREEN));
@@ -645,6 +539,7 @@ public class Main extends Application {
         }//if no sections, do not add red or any sections
     }
 
+    //Extracts the numbers into the correct layout from the "x,x" strings
     private double[] parseSectionData(InputTable data){
         double[] results = new double[4];
         parseOneSection(results,0,data.getAmber().getText());
@@ -652,9 +547,10 @@ public class Main extends Application {
         return results;
     }
 
+    //Turns a singular "x,x" into an array, if it is invalid sets the value as 0
     private void parseOneSection(double[]results, int index,String text ){
         String[] textArray = text.split(",");
-        if (textArray.length == 2){
+        if (textArray.length == 2){//this function weaves them into the results array as [amber,green,green2,amber2]
             try {
                 results[index] = Double.parseDouble(textArray[0]);
                 results[results.length-1-index] = Double.parseDouble(textArray[1]);
@@ -673,27 +569,26 @@ public class Main extends Application {
         for (int i = 0; i < gauges.size(); i++) {
             float currentVal, nextVal, gaugeVal;
             currentVal = dataArray[currentStep][i + 1];
-            if (currentStep < dataArray.length - 1) {
+            if (currentStep < dataArray.length - 1) { //If simulation still playing
                 nextVal = dataArray[currentStep + 1][i + 1];
                 gaugeVal = cosineInterpolate(currentVal, nextVal, mu);
-            } else {
+            } else { //If finished
                 gaugeVal = currentVal;
                 eventTimer.cancel();
                 timerStarted = false;
             }
             try {
                 final int x = i;
-                if (gauges.get(x).getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){
+                if (gauges.get(x).getSkinType() == Gauge.SkinType.TILE_SPARK_LINE){ //Fix for a quirk with Medusa graphs
                     if (gaugeVal == gauges.get(x).getCurrentValue()){
-                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal*1.00000000001));
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal*1.00000000001)); //Ensures line graph updates display (quirk with Medusa graphs)
                     } else {
-                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                        Platform.runLater(() ->gauges.get(x).setValue(gaugeVal)); //updates graph value on UI thread
                     }
                 } else {
-                    Platform.runLater(() ->gauges.get(x).setValue(gaugeVal));
+                    Platform.runLater(() ->gauges.get(x).setValue(gaugeVal)); //updates gauge value on UI thread
                 }
-
-                Platform.runLater(() -> updateBlinkingLight(gauges.get(x)));
+                Platform.runLater(() -> updateBlinkingLight(gauges.get(x))); //updates LED on UI thread
             } catch (NullPointerException e){
                 System.out.println("Data value at indices " + currentStep + ", " + i+1 + "appears to be null.");
             }
@@ -703,17 +598,19 @@ public class Main extends Application {
         if (mu == 0){
             currentStep++;
         }
-        Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5));
+        Platform.runLater(() -> timeSlider.setValue((currentStep+mu)*5)); //updates time slider on UI thread
         updateTimeLabel();
         if (eventsSelected) updateEventBox();
 
     }
 
-    private void updateBlinkingLight(Gauge gauge){
+    //Updates gauge LED to match current needle section
+    private void updateBlinkingLight(Gauge gauge){//checks if the section colour has changed and if it has it changes the gauge colour
         for (Section section :gauge.getSections()) {
             if (gauge.getCurrentValue() >= section.getStart() && gauge.getCurrentValue() <= section.getStop()){
                 if (gauge.getLedColor() != section.getColor()){
-                    gauge.setLedColor(section.getColor());
+                    gauge.setLedColor(section.getColor());//for led gauges
+                    gauge.setBarColor(section.getColor());//for line and cylinder
                 }
                 break;
             }
@@ -725,7 +622,7 @@ public class Main extends Application {
         Platform.runLater(() -> timeLabel.setText("Time Elapsed: " + (currentStep + mu) * 5 +"s"));
     }
 
-    //Updates event box
+    //Updates event box from eventLog
     private void updateEventBox(){
         float currentTime = (currentStep+mu)*5;
         while (eventLog.get(eventIndex).getTime() <= currentTime){
@@ -734,6 +631,7 @@ public class Main extends Application {
         }
     }
 
+    //Rebuilds event box after time is skipped
     private void rebuildEventLog(){
         eventBox.getItems().clear();
         eventIndex = 0;
@@ -751,17 +649,18 @@ public class Main extends Application {
 
     //Setup for TopicBox
     private VBox getTopicBox(final String TEXT, final Color COLOR, final Gauge GAUGE) {
-        Rectangle bar = new Rectangle(200, 3);
+        Rectangle bar = new Rectangle(200, 3);//blue bar
         bar.setArcWidth(6);
         bar.setArcHeight(6);
         bar.setFill(COLOR);
 
-        Label label = new Label(TEXT);
+        Label label = new Label(TEXT);//header
         label.setTextFill(COLOR);
+        label.setFont(Font.font(label.getFont().getFamily(), FontWeight.BOLD,34));
         label.setAlignment(Pos.CENTER);
         label.setPadding(new Insets(0, 0, 10, 0));
 
-        VBox vBox = new VBox(bar, label, GAUGE);
+        VBox vBox = new VBox(bar, label, GAUGE);//final box
         vBox.setSpacing(3);
         vBox.setAlignment(Pos.CENTER);
         return vBox;
@@ -796,10 +695,11 @@ public class Main extends Application {
     //Attempts to add item to ListView
     private void tryAddItem(String item, TableView<InputTable> tv)
     {
-        if (!checkItemPresent(item,tv)&&(item!=null)){
+        if (!checkItemPresent(item,tv)&&(item!=null)){//if not already added
             ComboBox<String> typePicker = new ComboBox<>();
-            typePicker.getItems().addAll(typeChooserTemplate.getItems());
-            typePicker.getSelectionModel().selectFirst();
+            typePicker.getItems().addAll(typeChooserTemplate.getItems());//duplicates the template
+            typePicker.getSelectionModel().selectFirst();//selects default gauge
+            //These next text boxes are each set up so that they prevent the user inputting invalid data
             TextField min = newValidatingDoubleTextField(Double.toString(PureFunctions.getMinValue(item)));
             TextField max = newValidatingDoubleTextField(Double.toString(PureFunctions.getMaxValue(item)));
             TextField amber = newValidatingRangeTextField(PureFunctions.getAmberRange(item));
@@ -808,6 +708,7 @@ public class Main extends Application {
         }
     }
 
+    //Creates a textbox that self-validates when the user either presses enter or exits the focus, ensuring it always has valid inputs
     private TextField newValidatingRangeTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -816,8 +717,9 @@ public class Main extends Application {
         return tf;
     }
 
+    //Checks if a range is valid ("" is valid to allow no section to be entered)
     private boolean validateRange(TextField textBox,Boolean oldVal){
-        if (oldVal){
+        if (oldVal){//this is whether the value has changed
             if (textBox.getText().compareTo("") == 0){
                 return true;
             }
@@ -842,6 +744,7 @@ public class Main extends Application {
         return false;
     }
 
+    //Similar to range validating textbox but calls a different validation function instead
     private TextField newValidatingDoubleTextField(String initialValue){
         AtomicReference<String> oldTxt = new AtomicReference<>(initialValue);
         TextField tf = new TextField();
@@ -850,6 +753,7 @@ public class Main extends Application {
         return tf;
     }
 
+    //Checks if a double is valid and outputs error if isn't
     private boolean validateDouble(String text, boolean oldVal){
         if (oldVal){
             try {
@@ -921,11 +825,12 @@ public class Main extends Application {
         VBox topVBox = new VBox();
         HBox timeHBox = new HBox();
         timeLabel = new Label();
-        String[] speeds = {"0.25x", "0.5x","0.75x","1x","1.25x","1.5x", "1.75x", "2x"};
+        String[] speeds = {"0.25x", "0.5x","1x","1.5x","2x","3x","4x","5x","6x","8x"};
         speedCB = new ComboBox<>(FXCollections
                 .observableArrayList(speeds));
         speedCB.setOnAction(event -> changePlaybackSpeed());
-        speedCB.setValue(speedCB.getItems().get(3));
+        speedCB.setValue("1x");
+        speedModifier = 1;
         timeSlider = new Slider(0, dataArray[dataArray.length-1][0], 0);
         timeSlider.setMajorTickUnit(updateFrequency/1000f);
         timeSlider.setMinorTickCount((int)(dataArray[rowCount-2][0] * (1000f/updateFrequency)) + 1);
@@ -993,6 +898,7 @@ public class Main extends Application {
         }
     }
 
+    //Speed up/slow down playback
     private void changePlaybackSpeed(){
         speedModifier = Float.parseFloat(speedCB.getValue().substring(0, speedCB.getValue().length()-1));
         if (!paused){
@@ -1003,7 +909,7 @@ public class Main extends Application {
         }
     }
 
-
+    //Extracts names of selected headers from TableView
     private String[] headersToStrings(TableView<InputTable> selectedItems){
         String[] selectedItemsArr = new String[selectedItems.getItems().size()+1];
         for (int i = 1; i < selectedItemsArr.length; i ++){
@@ -1014,42 +920,49 @@ public class Main extends Application {
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
-    private float[][] fillDataArray(String[] selectedItemsArr, BufferedReader reader){
-        float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
-        int[][] offSetArray = new int [selectedItemsArr.length][2];
-        for (int i=0; i < datArray.length+1; i++){
-            String[] tempData = new String[1];
-            try{
-                tempData = reader.readLine().split(", ");
-            }
-            catch (IOException ex){
-                System.out.println("IOException in reading from file.");
-            }
-            if (i == 0){
-                for (int j = 0; j < datArray[0].length; j++){
-                    offSetArray[j][0] = j;
-                    offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsArr[j]);
+    private float[][] fillDataArray(String[] selectedItemsArr, BufferedReader reader){//removes all spaces
+        String[] selectedItemsCopy = new String[selectedItemsArr.length];
+        for (int i = 0; i < selectedItemsArr.length; i++) {
+            selectedItemsCopy[i] = selectedItemsArr[i].replace(" ","");
+        }
+        float[][] datArray = new float[rowCount-1][selectedItemsCopy.length];
+        int[][] offSetArray = new int [selectedItemsCopy.length][2];
+        int i = 0; int j = 0;//for error handling
+        try {
+            for (i=0; i < datArray.length+1; i++){
+                String[] tempData = new String[1];
+                try{
+                    tempData = reader.readLine().replace(" ","").split(",");
                 }
-            } else {
-                for (int j = 0; j < datArray[i-1].length; j++) {
-                    if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
-                        datArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
-                    } else if (offSetArray[j][1] == 2) { //Date
-                        datArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
-                    } else { //Regular float
-                        datArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                catch (IOException ex){
+                    showPopup("Error reading csv file");
+                }
+                if (i == 0){
+                    for (j = 0; j < datArray[0].length; j++){
+                        offSetArray[j][0] = j;
+                        offSetArray[j][1] = Arrays.asList(tempData).indexOf(selectedItemsCopy[j]);
+                    }
+                } else {
+                    for (j = 0; j < datArray[i-1].length; j++) {
+                        if (offSetArray[j][1] == 0 || offSetArray[j][1] == 1) { //Time
+                            datArray[i-1][j] = (float) Math.round(timeToFloat(tempData[offSetArray[j][1]]) * 10000f) / 10000f;
+                        } else if (offSetArray[j][1] == 2) { //Date
+                            datArray[i-1][j] = dateTimeToFloat(tempData[offSetArray[j][1]]);
+                        } else { //Regular float
+                            datArray[i-1][j] = (float) Math.round(Float.parseFloat(tempData[offSetArray[j][1]])*10000f)/10000f;
+                        }
                     }
                 }
             }
+        } catch (Exception e){
+            showPopup("Error parsing csv, invalid input on row " + (i+1) + " of " + selectedItemsArr[j]);
+            return null;
         }
         return datArray;
     }
 
     //Fills data array with values from global file corresponding to headers passed through selectedItems
     private float[][] extractDataFromCSVData(String[] selectedItemsArr){
-        /*for (int j = 0; j < csvData.data.length; j++){
-            System.out.println(csvData.headers[j] + ":  " + csvData.data[j][0] + " " + csvData.data[j][1] + " " + csvData.data[j][2]);
-        }*/
         float[][] datArray = new float[rowCount-1][selectedItemsArr.length];
         int[][] offSetArray = new int [selectedItemsArr.length][2];
         for (int j = 0; j < datArray[0].length; j++){
@@ -1064,18 +977,18 @@ public class Main extends Application {
         return datArray;
     }
 
-    //Potentially no longer needed
+    //Converts a date and time string to a float (seconds) (roughly)
     private float dateTimeToFloat(String date){
         float outVal;
-        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d";
+        String pattern = "\\d\\d\\d\\d-\\d\\d-\\d\\d\\d\\d:\\d\\d:\\d\\d"; //Regex to match datetime format
         if (!date.matches(pattern)){
             return -1f;
         }
-        else{
+        else{ //Convert to seconds
             int years = Integer.parseInt(date.substring(0, 4));
             int months = Integer.parseInt(date.substring(5, 7));
             int days = Integer.parseInt(date.substring(8, 10));
-            float time = timeToFloat(date.substring(11,19));
+            float time = timeToFloat(date.substring(10,18));
             if (time != -1f) {
                 outVal = ((24 * (days + 28 * months + 365 * years)) * 3600f) + time;
             }
@@ -1089,10 +1002,10 @@ public class Main extends Application {
     //Converts time to float
     private float timeToFloat(String time){
         float outVal;
-        String pattern = "\\d+\\d:\\d\\d:\\d\\d";
-        if (!time.matches(pattern)){// || time.indexOf("-") != -1){ //r̝̮̥͔͎̱̜eg̭̺̰̪e̮̝͕̗̙̗ͅx̨
+        String pattern = "\\d+\\d:\\d\\d:\\d\\d"; //Regex to match time pattern
+        if (!time.matches(pattern)){
             return -1;
-        } else {
+        } else { //Converts into seconds
             int hourLength = time.indexOf(':');
             int minuteStart = hourLength + 1;
             int secondStart = minuteStart + 3;
@@ -1104,11 +1017,12 @@ public class Main extends Application {
         }
     }
 
+    //Extracts string after last dot in filename
     private String getFileExtension(String path)
     {
         int i = path.lastIndexOf('.');
         int p = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        if (i > p) {
+        if (i > p) {//Checks it's not a directory within the path that has a dot
             return path.substring(i+1);
         }
         return "";
@@ -1117,19 +1031,23 @@ public class Main extends Application {
     //Prompts user to select a file and stores contents in BufferedReader reader
     private void openFile(FileChooser fileChooser, Stage stage, boolean eventsLog){
         File workingDirectory = new File(System.getProperty("user.dir"));
+        if (eventsLog){//to help user know what to do
+            fileChooser.setTitle("Select Events Log");
+        } else {
+            fileChooser.setTitle("Select Data Log");
+        }
         fileChooser.setInitialDirectory(workingDirectory);
-        File file = fileChooser.showOpenDialog(stage);
-        //File file = new File("C:\\Users\\KingGax\\IdeaProjects\\PatientSimulators\\src\\main\\resources\\2019-10-28_1030_PhysiologicalDataLog.csv");
-        if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {
+        File file = fileChooser.showOpenDialog(stage);//open file dialog
+        if (file != null && (getFileExtension(file.getPath()).compareTo("csv") == 0)) {//check theyve chosen a csv file
             try {
-                if (eventsLog){
+                if (eventsLog){//for events logs
                     BufferedReader eventReader = new BufferedReader(new FileReader(file));
-                    eventLog = openEventLog(eventReader);
+                    eventLog = openEventLog(eventReader);//call event log reader function
                 }
-                else {
-                    dataReader = new BufferedReader(new FileReader(file));
-                    extractHeaders(file, dataReader);
-                    fillCSVData(file, dataReader);
+                else {//for data
+                    dataReader = new BufferedReader(new FileReader(file));//create a new reader
+                    extractHeaders(file, dataReader);//put headers into the header picker box
+                    fillCSVData(file, dataReader);//fill csvdata for saving
                     dataReader.close(); //must be closed and reopened to use later
                     dataReader = new BufferedReader(new FileReader(file));
                 }
@@ -1137,25 +1055,25 @@ public class Main extends Application {
                 System.out.println("IOException in opening file");
             }
         }
-        else if (file != null){
-            if (getFileExtension(file.getPath()).compareTo("csv")!=0)
+        else if (file != null){//displays error if file is not csv
+            if (getFileExtension(file.getPath()).compareTo("csv")!=0)//
             {
                 showPopup("Please choose a CSV file");
             }
         }
     }
+
+    //Creates a csvData object using fillDataArray with all headers selected
     private void fillCSVData(File file, BufferedReader dataReader){
         csvData = new CSVData(headerNames,fillDataArray(headerNames,dataReader));
-        System.out.println(csvData.data.length + " " + csvData.data[0].length);
-        for (int i = 0; i < csvData.headers.length; i++) {
-            System.out.println(csvData.headers[i] + " " + csvData.data[0][i] +" "+ csvData.data[0][i]);
-        }
     }
+
+    //Counts number of rows in the simulation
     private void countRows(File file){
         try{
-            BufferedReader rowReader = new BufferedReader(new FileReader(file));
+            BufferedReader rowReader = new BufferedReader(new FileReader(file)); //opens file
             rowCount = 0;
-            while (rowReader.readLine() != null) {
+            while (rowReader.readLine() != null) { //iterates through and counts rows
                 rowCount++;
             }
             rowReader.close();
@@ -1164,19 +1082,20 @@ public class Main extends Application {
         }
     }
 
+    //Takes headers of a file and fills combo box
     private void extractHeaders(File file, BufferedReader reader){
         try {
             reader.mark(1);//reads the line and then goes back so that it can work out later which columns to read
             String commaSep = reader.readLine();
             reader.reset();
-            fillComboBoxFromReader(commaSep);
-            selectedHeaderTitles.getItems().clear();
+            fillComboBoxFromReader(commaSep);//fills options combo box
         } catch (IOException ex) {
             System.out.println("IOException in printing file");
         }
         countRows(file);
     }
 
+    //Opens event log into an arrayList of event data objects
     private ArrayList<EventData> openEventLog(BufferedReader eventReader)
     {
         ArrayList<EventData> eLog = new ArrayList<>();
@@ -1200,7 +1119,6 @@ public class Main extends Application {
         return eLog;
     }
 
-
     //Fills ComboBox items with appropriate contents from csv file
     private void fillComboBoxFromReader(String commaSepItems){
         headerPicker.getItems().clear();
@@ -1213,10 +1131,12 @@ public class Main extends Application {
         }
     }
 
+    //Launcher for JavaFX
     public static void main(String[] args) {
         launch();
     }
 
+    //Terminates timer
     @Override
     public void stop(){
         if (timerStarted) {

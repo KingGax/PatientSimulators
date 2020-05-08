@@ -4,6 +4,7 @@ import javafx.scene.text.Text;
 
 import java.io.Serializable;
 
+//Class for packaging event data from event log CSV
 public class EventData implements Serializable {
     private int time;
     private String event;

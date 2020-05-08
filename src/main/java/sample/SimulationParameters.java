@@ -5,6 +5,7 @@ import eu.hansolo.medusa.Gauge;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+//Class for saving simulations
 public class SimulationParameters implements Serializable {
     private static final long serialVersionUID = 6128016096756071380L;
     private HeaderParameters[] headers;
@@ -12,14 +13,14 @@ public class SimulationParameters implements Serializable {
     private ArrayList<EventData> eventLog;
     private ArrayList<SGauge> customGauges;
     private ArrayList<String> customNames;
-    public SimulationParameters(HeaderParameters[] h, CSVData data,ArrayList<EventData> events,ArrayList<SGauge> _customGauges,ArrayList<String> _customNames) {
-        headers = h;
+    public SimulationParameters(HeaderParameters[] headerParameters, CSVData data, ArrayList<EventData> events, ArrayList<SGauge> _customGauges,ArrayList<String> _customNames) {
+        headers = headerParameters;
         csvData = data;
         eventLog = events;
         customGauges = _customGauges;
         customNames = _customNames;
     }
-    public CSVData getCsvData() {
+    public CSVData getCSVData() {
         return csvData;
     }
     public HeaderParameters[] getHeaders() {

@@ -1,5 +1,6 @@
 package sample;
 
+//Time-event pair for storing event log data
 public class Pair {
     private String event;
     private int time;

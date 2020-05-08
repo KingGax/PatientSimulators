@@ -2,8 +2,7 @@ package sample;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
 
-import java.io.Serializable;
-
+//Class for managing header table
 public class InputTable {
     String headerName;
     private ComboBox<String> options;

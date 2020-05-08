@@ -2,6 +2,7 @@ package sample;
 
 import java.util.TimerTask;
 
+//Custom timer class
 public class EventTimerTask extends TimerTask {
     private boolean started = false;
     final Main outer;

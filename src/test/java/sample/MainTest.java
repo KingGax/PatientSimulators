@@ -18,6 +18,7 @@ import static org.junit.Assert.*;
 public class MainTest {
     sample.Main main;
 
+    //For calling methods from a class/object
     private Object invokeMethod(Object obj, Method method, Object def, Object... parameters){
         Object out = def;
         try {
@@ -30,6 +31,7 @@ public class MainTest {
         return out;
     }
 
+    //Tests file extension function
     @Test
     public void TestgetFileExtension() {
         sample.Main main = new sample.Main();
@@ -53,6 +55,7 @@ public class MainTest {
         assertEquals("a", ext7);
     }
 
+    //Tests timeToFloat function
     @Test
     public void TesttimeToFloat() {
         sample.Main main = new sample.Main();
@@ -80,6 +83,7 @@ public class MainTest {
         assertEquals(-1f, ext9, 0.0001f);
     }
 
+    //Tests dateTimeToFloat function
     @Test
     public void TestdateTimeToFloat() {
         sample.Main main = new sample.Main();
@@ -87,28 +91,29 @@ public class MainTest {
         try{
             method = main.getClass().getDeclaredMethod("dateTimeToFloat", String.class);
         } catch (Exception e){}
-        float ext1 = (float) invokeMethod(main, method, -1f,"0000-00-00 00:00:00");
+        float ext1 = (float) invokeMethod(main, method, -1f,"0000-00-0000:00:00");
         assertEquals(0f, ext1, 0.0001f);
-        float ext2 = (float) invokeMethod(main, method, -1f,"2000-00-00 00:00:00");
+        float ext2 = (float) invokeMethod(main, method, -1f,"2000-00-0000:00:00");
         assertEquals(63072000000f, ext2, 0.0001f);
-        float ext3 = (float) invokeMethod(main, method, -1f,"200-00-00 00:00:00");
+        float ext3 = (float) invokeMethod(main, method, -1f,"200-00-0000:00:00");
         assertEquals(-1f, ext3, 0.0001f);
-        float ext4 = (float) invokeMethod(main, method, -1f,"200a-00-00 00:00:00");
+        float ext4 = (float) invokeMethod(main, method, -1f,"200a-00-0000:00:00");
         assertEquals(-1f, ext4, 0.0001f);
-        float ext5 = (float) invokeMethod(main, method, -1f,"-2000-00-00 00:00:00");
+        float ext5 = (float) invokeMethod(main, method, -1f,"-2000-00-0000:00:00");
         assertEquals(-1f, ext5, 0.0001f);
-        float ext6 = (float) invokeMethod(main, method, -1f,"2000-0a-00 00:00:00");
+        float ext6 = (float) invokeMethod(main, method, -1f,"2000-0a-0000:00:00");
         assertEquals(-1f, ext6, 0.0001f);
-        float ext7 = (float) invokeMethod(main, method, -1f,"2000-00-a0 00:00:00");
+        float ext7 = (float) invokeMethod(main, method, -1f,"2000-00-a000:00:00");
         assertEquals(-1f, ext7, 0.0001f);
-        float ext8 = (float) invokeMethod(main, method, -1f,"2000-00-00 0a:00:00");
+        float ext8 = (float) invokeMethod(main, method, -1f,"2000-00-000a:00:00");
         assertEquals(-1f, ext8, 0.0001f);
-        float ext9 = (float) invokeMethod(main, method, -1f,"2000-00-00 -00:00:00");
+        float ext9 = (float) invokeMethod(main, method, -1f,"2000-00-00-00:00:00");
         assertEquals(-1f, ext9, 0.0001f);
-        float ext10 = (float) invokeMethod(main, method, -1f,"0000-00-01 00:00:01");
+        float ext10 = (float) invokeMethod(main, method, -1f,"0000-00-0100:00:01");
         assertEquals(86401f, ext10, 0.0001f);
     }
 
+    //Tests float rounding function
     @Test
     public void TestroundToDP(){
         sample.Main main = new sample.Main();
@@ -130,6 +135,7 @@ public class MainTest {
         assertEquals(7.000001f, ext6, 0.0000001f);
     }
 
+    //Tests interpolation function with some pre-constructed data
     @Test
     public void TestcosineInterpolate(){
         sample.Main main = new sample.Main();
@@ -149,6 +155,7 @@ public class MainTest {
         assertEquals(1.1464466094f, ext5, 0.0001f);
     }
 
+    //Tests double validation
     @Test
     public void TestvalidateDouble(){
         sample.Main main = new sample.Main();
@@ -172,6 +179,7 @@ public class MainTest {
         assertFalse(ext6);
     }
 
+    //Tests filling of data array from file
     @Test
     public void TestfillDataArray(){
         sample.Main main = new sample.Main();
@@ -210,6 +218,7 @@ public class MainTest {
         }
     }
 
+    //Due to issues with modifying global values, this test could not be run
 //    @Test
 //    public void TestopenEventLog(){
 //        sample.Main main = new sample.Main();
