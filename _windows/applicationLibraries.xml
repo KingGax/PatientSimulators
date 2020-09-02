@@ -1,0 +1,11 @@
+<application>
+  <component name="libraryTable">
+    <library name="Medusa-11.2">
+      <CLASSES>
+        <root url="jar://D:/cs/spe/Medusa-11.2.jar!/" />
+      </CLASSES>
+      <JAVADOC />
+      <SOURCES />
+    </library>
+  </component>
+</application>
